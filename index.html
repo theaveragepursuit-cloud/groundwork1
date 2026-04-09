@@ -1643,7 +1643,7 @@ async function processMonth(silent=false){
     if(inv.behavior==='volatile'){np+=np*(Math.random()-0.47)*0.09;if(np<inv.base_price*0.3)np=inv.base_price*0.3;if(np>inv.base_price*4)np=inv.base_price*4;}
     else if(inv.behavior==='steady'){np+=np*(Math.random()-0.46)*0.025;if(np<inv.base_price*0.6)np=inv.base_price*0.6;}
     else if(inv.behavior==='business'){
-      if((REAL_MONTH-1)%3===2&&inv.shares_owned>0){
+      if((GM()-1)%3===2&&inv.shares_owned>0){
         const dist=Math.round(inv.shares_owned*inv.current_price*(0.05+Math.random()*0.09));
         primaryAcct.balance+=dist;totalDiv+=dist;
         summary.events.push({text:`${inv.name} paid quarterly distribution: ${fmt(dist)}.`,cls:'good'});
