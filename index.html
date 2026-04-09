@@ -1643,23 +1643,30 @@ async function processMonth(silent=false){
     if(inv.behavior==='volatile'){np+=np*(Math.random()-0.47)*0.09;if(np<inv.base_price*0.3)np=inv.base_price*0.3;if(np>inv.base_price*4)np=inv.base_price*4;}
     else if(inv.behavior==='steady'){np+=np*(Math.random()-0.46)*0.025;if(np<inv.base_price*0.6)np=inv.base_price*0.6;}
     else if(inv.behavior==='business'){
-      if((GM()-1)%3===2&&inv.shares_owned>0){
+      // Quarterly — fires every 3 game months
+      const gm=gs.game_month||1;
+      if(gm%3===0&&inv.shares_owned>0){
         const dist=Math.round(inv.shares_owned*inv.current_price*(0.05+Math.random()*0.09));
         primaryAcct.balance+=dist;totalDiv+=dist;
         summary.events.push({text:`${inv.name} paid quarterly distribution: ${fmt(dist)}.`,cls:'good'});
-        if(!silent){await sb.from('bank_accounts').update({balance:primaryAcct.balance}).eq('id',primaryAcct.id);await ledRec('Income','Distribution',`${inv.ticker} quarterly dist`,dist,primaryAcct.id,primaryAcct.balance);}
+        if(!silent)await ledRec('Income','Distribution',`${inv.ticker} quarterly dist`,dist,primaryAcct.id,primaryAcct.balance);
       }
       np+=np*(Math.random()-0.47)*0.04;
     }
     np=Math.max(np,0.5);
+    // Monthly dividends for stocks and index funds
     if(inv.dividend_rate>0&&inv.shares_owned>0&&inv.behavior!=='business'){
       const div=Math.round(inv.shares_owned*np*inv.dividend_rate/12);
-      if(div>0){primaryAcct.balance+=div;totalDiv+=div;}
+      if(div>0){
+        primaryAcct.balance+=div;totalDiv+=div;
+        if(!silent)await ledRec('Income','Dividend',`${inv.ticker} monthly dividend`,div,primaryAcct.id,primaryAcct.balance);
+      }
     }
     invUpdates.push({id:inv.id,current_price:parseFloat(np.toFixed(2)),prev_price:inv.current_price});
     inv.prev_price=inv.current_price;inv.current_price=np;
   }
-  if(totalDiv>0){await sb.from('bank_accounts').update({balance:primaryAcct.balance}).eq('id',primaryAcct.id);if(!silent)await ledRec('Income','Dividend','Investment dividends',totalDiv,primaryAcct.id,primaryAcct.balance);}
+  // Save bank account once after all dividends accumulated
+  if(totalDiv>0)await sb.from('bank_accounts').update({balance:primaryAcct.balance}).eq('id',primaryAcct.id);
 
   // 7. Vehicle repairs
   const repairUpdates=[];
