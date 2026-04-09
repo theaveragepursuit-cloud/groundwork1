@@ -1,0 +1,1865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Groundwork</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --bg:#080a0e;--surface:#0d1117;--surface2:#131920;--surface3:#1a2332;
+  --border:#1e2d3d;--border2:#243347;
+  --accent:#00d4ff;--accent2:#00ff88;--accent3:#ff6b35;--accent4:#ffd700;
+  --text:#e2e8f0;--text2:#94a3b8;--text3:#4a5568;--text4:#2d3748;
+  --red:#ff4444;--green:#00cc66;--blue:#3b82f6;--purple:#8b5cf6;
+  --font:'Space Grotesk',sans-serif;--mono:'JetBrains Mono',monospace;
+  --header-h:52px;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;}
+
+/* SCANLINE EFFECT */
+body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.03) 2px,rgba(0,0,0,0.03) 4px);pointer-events:none;z-index:9999;}
+
+/* HEADER */
+.header{height:var(--header-h);background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 1rem;position:fixed;top:0;left:0;right:0;z-index:200;}
+.header-left{display:flex;align-items:center;gap:1rem;}
+.logo{font-family:var(--mono);font-size:0.9rem;font-weight:500;color:var(--accent);letter-spacing:0.15em;text-transform:uppercase;}
+.logo-dot{display:inline-block;width:6px;height:6px;background:var(--accent);border-radius:50%;margin-right:0.5rem;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.5;transform:scale(0.8);}}
+.market-ticker{display:flex;gap:1.25rem;font-family:var(--mono);font-size:0.68rem;}
+.ticker-item{display:flex;align-items:center;gap:0.3rem;}
+.ticker-name{color:var(--text3);}
+.ticker-val{color:var(--text2);}
+.ticker-chg.up{color:var(--green);}
+.ticker-chg.down{color:var(--red);}
+.header-right{display:flex;align-items:center;gap:0.75rem;}
+.date-block{font-family:var(--mono);font-size:0.68rem;color:var(--text3);text-align:right;}
+.date-block strong{display:block;color:var(--text2);font-size:0.72rem;}
+.hdr-btn{padding:0.35rem 0.75rem;font-family:var(--mono);font-size:0.68rem;font-weight:500;cursor:pointer;border:none;letter-spacing:0.05em;text-transform:uppercase;transition:all 0.15s;}
+.hdr-btn-primary{background:var(--accent);color:var(--bg);}
+.hdr-btn-primary:hover{background:#00b8d9;}
+.hdr-btn-primary:disabled{opacity:0.4;cursor:not-allowed;}
+.hdr-btn-ghost{background:transparent;color:var(--text3);border:1px solid var(--border2);}
+.hdr-btn-ghost:hover{color:var(--accent3);border-color:var(--accent3);}
+
+/* LAYOUT */
+.layout{display:grid;grid-template-columns:220px 1fr;height:calc(100vh - var(--header-h));margin-top:var(--header-h);}
+
+/* SIDEBAR */
+.sidebar{background:var(--surface);border-right:1px solid var(--border);overflow-y:auto;display:flex;flex-direction:column;}
+.sidebar::-webkit-scrollbar{width:3px;}
+.sidebar::-webkit-scrollbar-track{background:transparent;}
+.sidebar::-webkit-scrollbar-thumb{background:var(--border2);}
+
+.nav-section{padding:0.5rem 0;}
+.nav-label{font-family:var(--mono);font-size:0.58rem;text-transform:uppercase;letter-spacing:0.12em;color:var(--text3);padding:0.5rem 1rem 0.25rem;}
+.nav-item{display:flex;align-items:center;gap:0.6rem;padding:0.5rem 1rem;cursor:pointer;transition:all 0.1s;font-size:0.82rem;color:var(--text2);border-left:2px solid transparent;}
+.nav-item:hover{background:var(--surface2);color:var(--text);}
+.nav-item.active{background:var(--surface2);color:var(--accent);border-left-color:var(--accent);}
+.nav-item-icon{font-size:0.85rem;width:16px;text-align:center;}
+.nav-item-badge{margin-left:auto;font-family:var(--mono);font-size:0.6rem;background:var(--accent);color:var(--bg);padding:0.1rem 0.35rem;border-radius:0;}
+
+.sidebar-accounts{padding:0.75rem;}
+.acct-card{background:var(--surface2);border:1px solid var(--border);padding:0.6rem 0.75rem;margin-bottom:0.35rem;cursor:pointer;transition:border-color 0.15s;}
+.acct-card:hover{border-color:var(--border2);}
+.acct-card.active{border-color:var(--accent);}
+.acct-name{font-size:0.72rem;color:var(--text2);margin-bottom:0.15rem;}
+.acct-balance{font-family:var(--mono);font-size:1rem;color:var(--text);font-weight:500;}
+.acct-type{font-family:var(--mono);font-size:0.58rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);}
+.acct-interest{font-family:var(--mono);font-size:0.6rem;color:var(--green);}
+.add-acct-btn{width:100%;background:transparent;border:1px dashed var(--border2);color:var(--text3);padding:0.5rem;font-family:var(--mono);font-size:0.65rem;cursor:pointer;text-transform:uppercase;letter-spacing:0.08em;transition:all 0.15s;margin-top:0.35rem;}
+.add-acct-btn:hover{border-color:var(--accent);color:var(--accent);}
+
+.sidebar-stats{padding:0.75rem;border-top:1px solid var(--border);}
+.sidebar-stat{display:flex;justify-content:space-between;align-items:center;padding:0.25rem 0;border-bottom:1px solid var(--border);font-size:0.75rem;}
+.sidebar-stat:last-child{border-bottom:none;}
+.sidebar-stat-label{color:var(--text3);}
+.sidebar-stat-value{font-family:var(--mono);color:var(--text2);}
+.sidebar-stat-value.green{color:var(--green);}
+.sidebar-stat-value.red{color:var(--red);}
+
+/* ECONOMY BAR */
+.economy-bar{padding:0.5rem 0.75rem;background:var(--surface2);border-top:1px solid var(--border);margin-top:auto;}
+.eco-label{font-family:var(--mono);font-size:0.58rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);margin-bottom:0.25rem;}
+.eco-cycle{font-family:var(--mono);font-size:0.75rem;font-weight:500;}
+.eco-cycle.expansion{color:var(--green);}
+.eco-cycle.peak{color:var(--accent4);}
+.eco-cycle.contraction{color:var(--red);}
+.eco-cycle.recovery{color:var(--accent);}
+.eco-stats{display:flex;gap:1rem;margin-top:0.25rem;}
+.eco-stat{font-family:var(--mono);font-size:0.6rem;color:var(--text3);}
+.eco-stat span{color:var(--text2);}
+
+/* MAIN */
+.main{overflow-y:auto;background:var(--bg);}
+.main::-webkit-scrollbar{width:4px;}
+.main::-webkit-scrollbar-track{background:transparent;}
+.main::-webkit-scrollbar-thumb{background:var(--border2);}
+
+/* PANELS */
+.panel{display:none;padding:1.25rem;min-height:100%;}
+.panel.active{display:block;}
+
+/* DASHBOARD / ACTIVITY */
+.dashboard-grid{display:grid;grid-template-columns:1fr 340px;gap:1.25rem;margin-bottom:1.25rem;}
+.activity-feed{display:flex;flex-direction:column;gap:0;}
+.feed-item{padding:0.875rem 1rem;border-bottom:1px solid var(--border);display:grid;grid-template-columns:auto 1fr auto;gap:0.75rem;align-items:start;transition:background 0.1s;}
+.feed-item:hover{background:var(--surface);}
+.feed-item:first-child{border-top:1px solid var(--border);}
+.feed-dot{width:8px;height:8px;border-radius:50%;margin-top:5px;flex-shrink:0;}
+.feed-dot.pos{background:var(--green);}
+.feed-dot.neg{background:var(--red);}
+.feed-dot.neu{background:var(--text3);}
+.feed-dot.info{background:var(--accent);}
+.feed-title{font-size:0.82rem;color:var(--text);line-height:1.4;margin-bottom:0.15rem;}
+.feed-body{font-size:0.72rem;color:var(--text2);line-height:1.4;}
+.feed-meta{font-family:var(--mono);font-size:0.6rem;color:var(--text3);white-space:nowrap;text-align:right;}
+.feed-amount{font-family:var(--mono);font-size:0.75rem;white-space:nowrap;}
+.feed-amount.pos{color:var(--green);}
+.feed-amount.neg{color:var(--red);}
+
+/* NET WORTH CARD */
+.nw-card{background:var(--surface);border:1px solid var(--border);padding:1.25rem;margin-bottom:1.25rem;}
+.nw-label{font-family:var(--mono);font-size:0.62rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);margin-bottom:0.5rem;}
+.nw-value{font-size:2.2rem;font-weight:700;color:var(--text);line-height:1;margin-bottom:0.35rem;}
+.nw-change{font-family:var(--mono);font-size:0.75rem;}
+.nw-change.pos{color:var(--green);}
+.nw-change.neg{color:var(--red);}
+.nw-breakdown{display:grid;grid-template-columns:repeat(4,1fr);gap:0.5rem;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border);}
+.nw-seg{text-align:center;}
+.nw-seg-label{font-family:var(--mono);font-size:0.58rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);margin-bottom:0.2rem;}
+.nw-seg-val{font-family:var(--mono);font-size:0.82rem;color:var(--text2);}
+
+/* QUICK STATS */
+.quick-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:0.75rem;margin-bottom:1.25rem;}
+.qs-card{background:var(--surface);border:1px solid var(--border);padding:0.875rem;}
+.qs-label{font-family:var(--mono);font-size:0.58rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);margin-bottom:0.35rem;}
+.qs-value{font-family:var(--mono);font-size:1.1rem;font-weight:500;color:var(--text);}
+.qs-value.green{color:var(--green);}
+.qs-value.red{color:var(--red);}
+.qs-value.blue{color:var(--accent);}
+.qs-sub{font-family:var(--mono);font-size:0.62rem;color:var(--text3);margin-top:0.15rem;}
+
+/* SECTION HEADERS */
+.sec-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:0.875rem;}
+.sec-title{font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;color:var(--text3);}
+.sec-action{font-family:var(--mono);font-size:0.65rem;color:var(--accent);cursor:pointer;background:none;border:none;text-transform:uppercase;letter-spacing:0.08em;}
+.sec-action:hover{color:#00b8d9;}
+.sec-div{height:1px;background:var(--border);margin:1.25rem 0;}
+
+/* DATA TABLE */
+.data-table{width:100%;border-collapse:collapse;}
+.data-table th{font-family:var(--mono);font-size:0.6rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);padding:0.5rem 0.75rem;border-bottom:1px solid var(--border);text-align:left;background:var(--surface);}
+.data-table td{font-family:var(--mono);font-size:0.72rem;padding:0.6rem 0.75rem;border-bottom:1px solid var(--border);color:var(--text2);}
+.data-table tr:hover td{background:var(--surface2);}
+.data-table td.hi{color:var(--text);}
+.data-table td.pos{color:var(--green);}
+.data-table td.neg{color:var(--red);}
+.data-table td.acc{color:var(--accent);}
+.data-table td.actions{text-align:right;}
+
+/* CARDS */
+.card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:0.875rem;}
+.card{background:var(--surface);border:1px solid var(--border);padding:1rem;transition:border-color 0.15s,background 0.15s;}
+.card:hover{border-color:var(--border2);background:var(--surface2);}
+.card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.6rem;gap:0.5rem;}
+.card-title{font-size:0.88rem;font-weight:600;color:var(--text);line-height:1.3;}
+.card-badge{font-family:var(--mono);font-size:0.56rem;text-transform:uppercase;letter-spacing:0.08em;padding:0.18rem 0.45rem;white-space:nowrap;flex-shrink:0;}
+.badge-blue{background:rgba(59,130,246,0.15);color:var(--blue);border:1px solid rgba(59,130,246,0.3);}
+.badge-green{background:rgba(0,204,102,0.1);color:var(--green);border:1px solid rgba(0,204,102,0.25);}
+.badge-orange{background:rgba(255,107,53,0.1);color:var(--accent3);border:1px solid rgba(255,107,53,0.25);}
+.badge-gold{background:rgba(255,215,0,0.1);color:var(--accent4);border:1px solid rgba(255,215,0,0.25);}
+.badge-cyan{background:rgba(0,212,255,0.1);color:var(--accent);border:1px solid rgba(0,212,255,0.25);}
+.badge-gray{background:rgba(74,85,104,0.3);color:var(--text3);border:1px solid var(--border);}
+.card-price{font-family:var(--mono);font-size:1.2rem;color:var(--accent);margin-bottom:0.35rem;}
+.card-meta{font-family:var(--mono);font-size:0.65rem;color:var(--text2);line-height:1.7;margin-bottom:0.75rem;}
+.card-footer{display:flex;gap:0.4rem;flex-wrap:wrap;align-items:center;}
+.card-chg{font-family:var(--mono);font-size:0.68rem;margin-bottom:0.4rem;}
+.card-chg.up{color:var(--green);}
+.card-chg.down{color:var(--red);}
+.card-chg.flat{color:var(--text3);}
+
+/* SPARKLINE */
+.sparkline-wrap{margin-bottom:0.5rem;cursor:pointer;position:relative;}
+canvas.sparkline{display:block;width:100%;height:38px;}
+
+/* BUTTONS */
+.btn{padding:0.4rem 0.7rem;font-family:var(--mono);font-size:0.65rem;font-weight:500;text-transform:uppercase;letter-spacing:0.05em;cursor:pointer;border:none;transition:all 0.15s;min-height:32px;}
+.btn-primary{background:var(--accent);color:var(--bg);}
+.btn-primary:hover{background:#00b8d9;}
+.btn-primary:disabled{opacity:0.3;cursor:not-allowed;}
+.btn-success{background:var(--green);color:var(--bg);}
+.btn-success:hover{background:#00aa55;}
+.btn-success:disabled{opacity:0.3;cursor:not-allowed;}
+.btn-danger{background:var(--accent3);color:#fff;}
+.btn-danger:hover{background:#e55a28;}
+.btn-danger:disabled{opacity:0.3;cursor:not-allowed;}
+.btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border2);}
+.btn-ghost:hover{border-color:var(--text2);color:var(--text);}
+.btn-red{background:var(--red);color:#fff;}
+.btn-red:hover{background:#cc3333;}
+.input{background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-family:var(--mono);font-size:0.8rem;padding:0.4rem 0.6rem;min-height:32px;transition:border-color 0.15s;}
+.input:focus{outline:none;border-color:var(--accent);}
+.input-sm{width:80px;}
+.input-md{width:120px;}
+
+/* PROGRESS BAR */
+.prog-track{height:3px;background:var(--surface3);width:100%;}
+.prog-fill{height:3px;background:var(--accent);transition:width 0.5s;}
+.prog-fill.green{background:var(--green);}
+.prog-fill.orange{background:var(--accent3);}
+.prog-fill.red{background:var(--red);}
+
+/* CONDITION BARS */
+.cond-bars{margin:0.5rem 0;}
+.cond-row{display:grid;grid-template-columns:75px 1fr 28px;gap:0.35rem;align-items:center;margin-bottom:0.25rem;}
+.cond-label{font-family:var(--mono);font-size:0.58rem;color:var(--text3);}
+.cond-track{height:3px;background:var(--surface3);}
+.cond-fill{height:3px;transition:width 0.4s;}
+.cond-val{font-family:var(--mono);font-size:0.58rem;color:var(--text3);text-align:right;}
+
+/* TRANSFER MODAL SPECIFIC */
+.transfer-accts{display:grid;grid-template-columns:1fr auto 1fr;gap:0.75rem;align-items:center;margin:1rem 0;}
+.transfer-arrow{font-size:1.2rem;color:var(--text3);text-align:center;}
+.acct-select{background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-family:var(--mono);font-size:0.75rem;padding:0.5rem;width:100%;}
+.acct-select:focus{outline:none;border-color:var(--accent);}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:500;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.2s;padding:1rem;}
+.modal-overlay.active{opacity:1;pointer-events:all;}
+.modal{background:var(--surface);border:1px solid var(--border2);padding:1.5rem;width:100%;max-width:500px;max-height:88vh;overflow-y:auto;transform:translateY(16px);transition:transform 0.2s;}
+.modal-overlay.active .modal{transform:translateY(0);}
+.modal-lg{max-width:620px;}
+.modal-title{font-size:1rem;font-weight:600;color:var(--text);margin-bottom:0.2rem;}
+.modal-sub{font-family:var(--mono);font-size:0.65rem;color:var(--text2);margin-bottom:1.25rem;}
+.modal-close-btn{width:100%;margin-top:1rem;padding:0.6rem;background:var(--accent);color:var(--bg);border:none;font-family:var(--mono);font-size:0.72rem;font-weight:500;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer;}
+.modal-close-btn:hover{background:#00b8d9;}
+.sum-row{display:flex;justify-content:space-between;padding:0.4rem 0;border-bottom:1px solid var(--border);font-size:0.8rem;}
+.sum-row .lbl{color:var(--text2);}
+.sum-row .val{font-family:var(--mono);}
+.sum-row .val.pos{color:var(--green);}
+.sum-row .val.neg{color:var(--red);}
+.m-evt{margin:0.3rem 0;padding:0.5rem 0.75rem;background:var(--surface2);border-left:2px solid var(--accent);font-size:0.78rem;line-height:1.5;}
+.m-evt.good{border-left-color:var(--green);}
+.m-evt.bad{border-left-color:var(--red);}
+.retire-input{width:100%;background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-family:var(--mono);font-size:1rem;padding:0.75rem;text-align:center;margin:1rem 0;letter-spacing:0.2em;}
+.retire-input:focus{outline:none;border-color:var(--red);}
+
+/* CREDIT SCORE */
+.credit-arc{text-align:center;padding:1rem 0;}
+.credit-score-num{font-family:var(--mono);font-size:2.5rem;font-weight:700;}
+.credit-score-label{font-family:var(--mono);font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);}
+
+/* NEWS */
+.news-list{display:flex;flex-direction:column;gap:0.5rem;}
+.news-item{background:var(--surface);border:1px solid var(--border);padding:0.875rem 1rem;border-left:3px solid var(--border);}
+.news-item.bullish{border-left-color:var(--green);}
+.news-item.bearish{border-left-color:var(--red);}
+.news-item.neutral{border-left-color:var(--accent);}
+.news-cat{font-family:var(--mono);font-size:0.58rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);margin-bottom:0.3rem;}
+.news-headline{font-size:0.85rem;font-weight:600;color:var(--text);margin-bottom:0.25rem;line-height:1.4;}
+.news-body{font-family:var(--mono);font-size:0.65rem;color:var(--text2);line-height:1.5;}
+.news-signal{font-family:var(--mono);font-size:0.6rem;text-transform:uppercase;letter-spacing:0.06em;margin-top:0.35rem;}
+.news-signal.bullish{color:var(--green);}
+.news-signal.bearish{color:var(--red);}
+.news-signal.neutral{color:var(--text3);}
+
+/* MILESTONE */
+.milestone-strip{background:var(--surface);border:1px solid var(--border);padding:0.6rem 1rem;margin-bottom:1rem;display:flex;align-items:center;gap:1rem;}
+.ms-label{font-family:var(--mono);font-size:0.6rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);white-space:nowrap;}
+.ms-name{font-family:var(--mono);font-size:0.75rem;color:var(--accent);white-space:nowrap;}
+.ms-track{flex:1;height:3px;background:var(--surface3);}
+.ms-fill{height:3px;background:var(--accent);transition:width 0.5s;}
+.ms-next{font-family:var(--mono);font-size:0.6rem;color:var(--text3);white-space:nowrap;}
+
+/* LOCKED */
+.locked{opacity:0.4;pointer-events:none;position:relative;}
+.lock-overlay{font-family:var(--mono);font-size:0.65rem;color:var(--text3);padding:0.5rem;border:1px dashed var(--border2);text-align:center;margin-top:0.5rem;}
+
+/* VACANCY */
+.vbadge{font-family:var(--mono);font-size:0.58rem;text-transform:uppercase;padding:0.15rem 0.4rem;letter-spacing:0.06em;}
+.vbadge.occ{background:rgba(0,204,102,0.1);color:var(--green);border:1px solid rgba(0,204,102,0.25);}
+.vbadge.vac{background:rgba(255,68,68,0.1);color:var(--red);border:1px solid rgba(255,68,68,0.25);}
+
+/* PROJECT PROGRESS */
+.proj-prog{margin:0.5rem 0;}
+.proj-prog-label{display:flex;justify-content:space-between;font-family:var(--mono);font-size:0.6rem;color:var(--text3);margin-bottom:0.25rem;}
+
+/* TOAST */
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--surface);border:1px solid var(--border2);border-left:3px solid var(--accent);padding:0.65rem 1rem;font-family:var(--mono);font-size:0.72rem;color:var(--text);z-index:600;opacity:0;transform:translateY(8px);transition:all 0.2s;max-width:300px;line-height:1.4;}
+.toast.show{opacity:1;transform:translateY(0);}
+.toast.error{border-left-color:var(--red);}
+.toast.success{border-left-color:var(--green);}
+
+/* LOADING */
+.loading-screen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1rem;z-index:900;transition:opacity 0.5s;}
+.loading-screen.hide{opacity:0;pointer-events:none;}
+.loading-logo{font-family:var(--mono);font-size:1.5rem;font-weight:500;color:var(--accent);letter-spacing:0.2em;text-transform:uppercase;}
+.loading-status{font-family:var(--mono);font-size:0.7rem;color:var(--text3);letter-spacing:0.1em;}
+.loading-bar{width:200px;height:2px;background:var(--surface3);margin-top:0.5rem;}
+.loading-bar-fill{height:2px;background:var(--accent);width:0%;transition:width 0.3s;}
+
+/* MOBILE */
+.mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);z-index:150;padding:0.5rem;}
+.mobile-nav-inner{display:flex;justify-content:space-around;}
+.mobile-nav-item{display:flex;flex-direction:column;align-items:center;gap:0.2rem;padding:0.3rem 0.5rem;cursor:pointer;color:var(--text3);font-family:var(--mono);font-size:0.55rem;text-transform:uppercase;letter-spacing:0.06em;transition:color 0.15s;}
+.mobile-nav-item.active{color:var(--accent);}
+.mobile-nav-icon{font-size:1rem;}
+.mobile-menu-item{background:var(--surface2);border:1px solid var(--border);padding:0.875rem 1rem;font-family:var(--mono);font-size:0.75rem;color:var(--text2);cursor:pointer;transition:all 0.15s;display:flex;align-items:center;gap:0.5rem;}
+.mobile-menu-item:hover{background:var(--surface3);color:var(--text);border-color:var(--accent);}
+
+@media(max-width:768px){
+  .layout{grid-template-columns:1fr;}
+  .sidebar{display:none;}
+  .mobile-nav{display:block;}
+  .main{padding-bottom:70px;}
+  .panel{padding:0.875rem;}
+  .dashboard-grid{grid-template-columns:1fr;}
+  .quick-stats{grid-template-columns:1fr 1fr;}
+  .card-grid{grid-template-columns:1fr;}
+  .nw-breakdown{grid-template-columns:repeat(2,1fr);}
+  .market-ticker{display:none;}
+  .date-block{display:none;}
+  .logo span{display:none;}
+}
+</style>
+</head>
+<body>
+
+<div class="loading-screen" id="loadingScreen">
+  <div class="loading-logo">● Groundwork</div>
+  <div class="loading-status" id="loadingStatus">Connecting to markets...</div>
+  <div class="loading-bar"><div class="loading-bar-fill" id="loadingBar"></div></div>
+</div>
+
+<header class="header">
+  <div class="header-left">
+    <div class="logo"><span class="logo-dot"></span>GROUNDWORK</div>
+    <div class="market-ticker" id="marketTicker"></div>
+  </div>
+  <div class="header-right">
+    <div class="date-block">
+      <strong id="headerDate">Loading...</strong>
+      <span id="headerSeason"></span>
+    </div>
+    <button class="hdr-btn hdr-btn-ghost" onclick="openRetireModal()">Retire</button>
+    <button class="hdr-btn hdr-btn-primary" id="endMonthBtn" onclick="endMonth()">Advance Month</button>
+  </div>
+</header>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="nav-section">
+      <div class="nav-label">Overview</div>
+      <div class="nav-item active" onclick="switchPanel('dashboard',this)"><span class="nav-item-icon">⬛</span> Dashboard</div>
+      <div class="nav-item" onclick="switchPanel('news',this)"><span class="nav-item-icon">📰</span> News & Intel</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Portfolio</div>
+      <div class="nav-item" onclick="switchPanel('commodities',this)"><span class="nav-item-icon">🌽</span> Commodities</div>
+      <div class="nav-item" onclick="switchPanel('properties',this)"><span class="nav-item-icon">🏠</span> Real Estate</div>
+      <div class="nav-item" onclick="switchPanel('vehicles',this)"><span class="nav-item-icon">🚗</span> Vehicles</div>
+      <div class="nav-item" onclick="switchPanel('stocks',this)"><span class="nav-item-icon">📈</span> Stocks</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Finance</div>
+      <div class="nav-item" onclick="switchPanel('banking',this)"><span class="nav-item-icon">🏦</span> Banking</div>
+      <div class="nav-item" onclick="switchPanel('loans',this)"><span class="nav-item-icon">💳</span> Loans & Credit</div>
+      <div class="nav-item" onclick="switchPanel('ledger',this)"><span class="nav-item-icon">📒</span> Ledger</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Storage</div>
+      <div class="nav-item" onclick="switchPanel('silos',this)"><span class="nav-item-icon">🏚</span> Silos</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">History</div>
+      <div class="nav-item" onclick="switchPanel('portfolio',this)"><span class="nav-item-icon">📊</span> Portfolio Chart</div>
+      <div class="nav-item" onclick="switchPanel('legacy',this)"><span class="nav-item-icon">🏆</span> Legacy</div>
+    </div>
+
+    <div class="sidebar-accounts">
+      <div class="nav-label" style="padding:0 0 0.5rem;">Accounts</div>
+      <div id="sidebarAccounts"></div>
+      <button class="add-acct-btn" onclick="openAddAccountModal()">+ Open Account</button>
+    </div>
+
+    <div class="sidebar-stats">
+      <div class="sidebar-stat"><span class="sidebar-stat-label">Net Worth</span><span class="sidebar-stat-value acc" id="sbNW">$0</span></div>
+      <div class="sidebar-stat"><span class="sidebar-stat-label">Monthly In</span><span class="sidebar-stat-value green" id="sbIncome">$0</span></div>
+      <div class="sidebar-stat"><span class="sidebar-stat-label">Monthly Out</span><span class="sidebar-stat-value red" id="sbCosts">$0</span></div>
+      <div class="sidebar-stat"><span class="sidebar-stat-label">Net/Mo</span><span class="sidebar-stat-value" id="sbNet">$0</span></div>
+      <div class="sidebar-stat"><span class="sidebar-stat-label">Credit</span><span class="sidebar-stat-value" id="sbCredit">680</span></div>
+    </div>
+
+    <div class="economy-bar">
+      <div class="eco-label">Economy</div>
+      <div class="eco-cycle" id="ecoCycle">Expansion</div>
+      <div class="eco-stats">
+        <div class="eco-stat">INF <span id="ecoInfl">2.0%</span></div>
+        <div class="eco-stat">RATE <span id="ecoRate">6.5%</span></div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <!-- DASHBOARD -->
+    <div class="panel active" id="panel-dashboard">
+      <div class="quick-stats" id="quickStats"></div>
+      <div class="dashboard-grid">
+        <div>
+          <div class="nw-card" id="nwCard"></div>
+          <div class="sec-header"><div class="sec-title">Activity Feed</div></div>
+          <div class="activity-feed" id="activityFeed"></div>
+        </div>
+        <div>
+          <div class="sec-header"><div class="sec-title">Market Snapshot</div></div>
+          <div id="marketSnapshot"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- NEWS -->
+    <div class="panel" id="panel-news">
+      <div class="sec-header"><div class="sec-title">Market Intelligence</div><div style="font-family:var(--mono);font-size:0.65rem;color:var(--text3)" id="newsDate"></div></div>
+      <div id="advisorCard" style="margin-bottom:1rem;"></div>
+      <div class="news-list" id="newsList"></div>
+    </div>
+
+    <!-- COMMODITIES -->
+    <div class="panel" id="panel-commodities">
+      <div class="milestone-strip" id="commMilestone"></div>
+      <div class="sec-header"><div class="sec-title">Commodity Market</div><div style="font-family:var(--mono);font-size:0.65rem;color:var(--text3)">Storage: <span id="commStorage">0/500</span></div></div>
+      <div class="card-grid" id="commodityGrid"></div>
+    </div>
+
+    <!-- PROPERTIES -->
+    <div class="panel" id="panel-properties">
+      <div class="sec-header"><div class="sec-title">Your Properties</div><button class="sec-action" onclick="switchPanel('prop-develop',document.querySelector('.nav-item'))">+ Develop</button></div>
+      <div id="ownedPropList"></div>
+      <div class="sec-div"></div>
+      <div class="sec-header"><div class="sec-title">Market Listings</div></div>
+      <div class="card-grid" id="propMarketGrid"></div>
+    </div>
+
+    <!-- BUSINESSES -->
+    <div class="panel" id="panel-businesses">
+      <div class="sec-header"><div class="sec-title">Your Businesses</div></div>
+      <div id="ownedBizList"></div>
+      <div class="sec-div"></div>
+      <div class="sec-div"></div>
+      <div class="sec-header"><div class="sec-title">Businesses for Sale <span style="color:var(--text3);font-size:0.62rem;font-weight:400;">Rotates monthly</span></div></div>
+      <div id="bizProjectList"></div>
+    </div>
+
+    <!-- VEHICLES -->
+    <div class="panel" id="panel-vehicles">
+      <div class="sec-header"><div class="sec-title">Your Vehicles</div></div>
+      <div id="ownedVehList"></div>
+      <div class="sec-div"></div>
+      <div class="sec-header"><div class="sec-title">Available on Market</div><span style="font-family:var(--mono);font-size:0.62rem;color:var(--text3)">Rotates monthly</span></div>
+      <div class="card-grid" id="vehMarketGrid"></div>
+    </div>
+
+    <!-- STOCKS -->
+    <div class="panel" id="panel-stocks">
+      <div class="sec-header"><div class="sec-title">Stock Market</div><span style="font-family:var(--mono);font-size:0.62rem;color:var(--text3)">Check occasionally. Not the main event.</span></div>
+      <div class="card-grid" id="stockGrid"></div>
+    </div>
+
+    <!-- BANKING -->
+    <div class="panel" id="panel-banking">
+      <div class="sec-header"><div class="sec-title">Your Accounts</div><button class="sec-action" onclick="openAddAccountModal()">+ Open Account</button></div>
+      <div id="bankAccountList"></div>
+      <div class="sec-div"></div>
+      <div class="sec-header"><div class="sec-title">Transfer Funds</div></div>
+      <div id="transferWidget"></div>
+    </div>
+
+    <!-- LOANS -->
+    <div class="panel" id="panel-loans">
+      <div class="sec-header"><div class="sec-title">Credit Profile</div></div>
+      <div id="creditCard"></div>
+      <div class="sec-div"></div>
+      <div class="sec-header"><div class="sec-title">Active Loans</div></div>
+      <div id="activeLoanList"></div>
+      <div class="sec-div"></div>
+      <div class="sec-header"><div class="sec-title">Available Loans</div></div>
+      <div class="card-grid" id="loanOptions"></div>
+    </div>
+
+    <!-- LEDGER -->
+    <div class="panel" id="panel-ledger">
+      <div class="sec-header"><div class="sec-title">Transaction Ledger</div></div>
+      <div style="display:flex;gap:0.4rem;flex-wrap:wrap;margin-bottom:1rem;" id="ledgerFilters"></div>
+      <div style="overflow-x:auto;">
+        <table class="data-table">
+          <thead><tr><th>Date</th><th>Account</th><th>Category</th><th>Description</th><th>Amount</th><th>Balance</th></tr></thead>
+          <tbody id="ledgerBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SILOS -->
+    <div class="panel" id="panel-silos">
+      <div class="sec-header"><div class="sec-title">Storage Assets</div></div>
+      <div id="ownedSiloList"></div>
+      <div class="sec-div"></div>
+      <div class="sec-header"><div class="sec-title">Available to Purchase</div></div>
+      <div class="card-grid" id="siloMarketGrid"></div>
+    </div>
+
+    <!-- PORTFOLIO -->
+    <div class="panel" id="panel-portfolio">
+      <div class="sec-header"><div class="sec-title">Portfolio Overview</div></div>
+      <div style="background:var(--surface);border:1px solid var(--border);padding:1.25rem;margin-bottom:1rem;">
+        <div class="sec-title" style="margin-bottom:0.875rem;">Net Worth History</div>
+        <canvas id="wealthChart" height="180"></canvas>
+      </div>
+      <div class="card-grid" id="portfolioStats"></div>
+    </div>
+
+    <!-- LEGACY -->
+    <div class="panel" id="panel-legacy">
+      <div class="sec-header"><div class="sec-title">Retirement History</div></div>
+      <div id="legacyList"></div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Mobile Nav -->
+<nav class="mobile-nav">
+  <div class="mobile-nav-inner">
+    <div class="mobile-nav-item active" onclick="switchPanel('dashboard',this)"><span class="mobile-nav-icon">⬛</span>Home</div>
+    <div class="mobile-nav-item" onclick="switchPanel('news',this)"><span class="mobile-nav-icon">📰</span>News</div>
+    <div class="mobile-nav-item" onclick="switchPanel('commodities',this)"><span class="mobile-nav-icon">🌽</span>Market</div>
+    <div class="mobile-nav-item" onclick="switchPanel('banking',this)"><span class="mobile-nav-icon">🏦</span>Bank</div>
+    <div class="mobile-nav-item" onclick="openMobileMenu()"><span class="mobile-nav-icon">☰</span>More</div>
+  </div>
+</nav>
+
+<!-- Mobile full menu overlay -->
+<div id="mobileMenu" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:300;overflow-y:auto;">
+  <div style="background:var(--surface);min-height:100%;padding:1rem;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;padding-bottom:0.875rem;border-bottom:1px solid var(--border);">
+      <div style="font-family:var(--mono);font-size:0.75rem;text-transform:uppercase;letter-spacing:0.12em;color:var(--text3);">All Sections</div>
+      <button onclick="closeMobileMenu()" style="background:transparent;border:1px solid var(--border2);color:var(--text2);padding:0.35rem 0.75rem;font-family:var(--mono);font-size:0.68rem;cursor:pointer;">✕ Close</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;">
+      <div class="mobile-menu-item" onclick="mobileNav('dashboard')">⬛ Dashboard</div>
+      <div class="mobile-menu-item" onclick="mobileNav('news')">📰 News</div>
+      <div class="mobile-menu-item" onclick="mobileNav('commodities')">🌽 Market</div>
+      <div class="mobile-menu-item" onclick="mobileNav('properties')">🏠 Properties</div>
+      <div class="mobile-menu-item" onclick="mobileNav('vehicles')">🚗 Vehicles</div>
+      <div class="mobile-menu-item" onclick="mobileNav('stocks')">📈 Stocks</div>
+      <div class="mobile-menu-item" onclick="mobileNav('banking')">🏦 Banking</div>
+      <div class="mobile-menu-item" onclick="mobileNav('loans')">💳 Loans</div>
+      <div class="mobile-menu-item" onclick="mobileNav('ledger')">📒 Ledger</div>
+      <div class="mobile-menu-item" onclick="mobileNav('silos')">🏚 Silos</div>
+      <div class="mobile-menu-item" onclick="mobileNav('portfolio')">📊 Portfolio</div>
+      <div class="mobile-menu-item" onclick="mobileNav('legacy')">🏆 Legacy</div>
+      <div class="mobile-menu-item" onclick="closeMobileMenu();openRetireModal();" style="color:var(--accent3);border-color:var(--accent3);">🚪 Retire</div>
+    </div>
+    <div style="margin-top:1.25rem;padding-top:1rem;border-top:1px solid var(--border);">
+      <button class="hdr-btn hdr-btn-primary" style="width:100%;padding:0.75rem;" onclick="closeMobileMenu();endMonth();">Advance Month →</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modals -->
+<div class="modal-overlay" id="monthModal"><div class="modal modal-lg"><div class="modal-title" id="mmTitle"></div><div class="modal-sub" id="mmSub"></div><div id="mmContent"></div><button class="modal-close-btn" onclick="closeModal('monthModal')">Continue →</button></div></div>
+<div class="modal-overlay" id="priceModal"><div class="modal modal-lg"><div class="modal-title" id="pmTitle"></div><div class="modal-sub" id="pmSub"></div><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0.5rem;margin-bottom:1rem;" id="pmStats"></div><div style="background:var(--surface);border:1px solid var(--border);padding:1rem;margin-bottom:0.75rem;"><div class="sec-title" id="pmChartLabel" style="margin-bottom:0.5rem;"></div><canvas id="priceChart" height="160"></canvas></div><table style="width:100%;border-collapse:collapse;" id="pmTable"></table><button class="modal-close-btn" onclick="closeModal('priceModal')">Close</button></div></div>
+<div class="modal-overlay" id="repairModal"><div class="modal"><div class="modal-title" id="repairTitle">Repair Vehicle</div><div class="modal-sub">Choose repairs — each takes 1–2 months</div><div id="repairContent"></div><button class="modal-close-btn" onclick="closeModal('repairModal')">Close</button></div></div>
+<div class="modal-overlay" id="sellVehModal"><div class="modal"><div class="modal-title" id="svTitle">Sell Vehicle</div><div class="modal-sub">Review your sale</div><div id="svContent"></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-top:1rem;"><button class="btn btn-ghost" style="padding:0.6rem;" onclick="closeModal('sellVehModal')">Cancel</button><button class="btn btn-danger" style="padding:0.6rem;" onclick="confirmSellVeh()">Confirm Sale</button></div></div></div>
+<div class="modal-overlay" id="sellPropModal"><div class="modal"><div class="modal-title" id="spTitle">Sell Property</div><div class="modal-sub">Review your sale</div><div id="spContent"></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-top:1rem;"><button class="btn btn-ghost" style="padding:0.6rem;" onclick="closeModal('sellPropModal')">Cancel</button><button class="btn btn-danger" style="padding:0.6rem;" onclick="confirmSellProp()">Confirm Sale</button></div></div></div>
+<div class="modal-overlay" id="transferModal"><div class="modal"><div class="modal-title">Transfer Funds</div><div class="modal-sub">Move money between your accounts</div><div class="transfer-accts"><div><div style="font-family:var(--mono);font-size:0.6rem;color:var(--text3);margin-bottom:0.35rem;">FROM</div><select class="acct-select" id="transferFrom"></select></div><div class="transfer-arrow">→</div><div><div style="font-family:var(--mono);font-size:0.6rem;color:var(--text3);margin-bottom:0.35rem;">TO</div><select class="acct-select" id="transferTo"></select></div></div><div style="margin-bottom:1rem;"><div style="font-family:var(--mono);font-size:0.6rem;color:var(--text3);margin-bottom:0.35rem;">AMOUNT</div><input class="input" style="width:100%;" type="number" id="transferAmount" placeholder="0.00"></div><button class="modal-close-btn" style="margin-top:0;" onclick="doTransferModal()">Transfer</button><button class="btn btn-ghost" style="width:100%;margin-top:0.5rem;padding:0.6rem;" onclick="closeModal('transferModal')">Cancel</button></div></div>
+<div class="modal-overlay" id="addAccountModal"><div class="modal"><div class="modal-title">Open New Account</div><div class="modal-sub">Choose account type</div><div class="card-grid" id="accountOptions"></div><button class="btn btn-ghost" style="width:100%;padding:0.6rem;margin-top:1rem;" onclick="closeModal('addAccountModal')">Cancel</button></div></div>
+
+<div class="modal-overlay" id="retireModal1"><div class="modal"><div class="modal-title" style="color:var(--accent3);">Retire?</div><div class="modal-sub">This will end your current run permanently.</div><div style="font-family:var(--mono);font-size:0.7rem;color:var(--text2);line-height:1.8;margin-bottom:1rem;">Your run will be saved to Legacy with your final stats.<br>You restart with <span style="color:var(--accent);">$150,000</span> in index funds and $10,000 cash.<br>All assets, debts, and history will be cleared.</div><div class="sum-row"><span class="lbl">Current Net Worth</span><span class="val" id="r1NW">$0</span></div><div class="sum-row"><span class="lbl">Months Played</span><span class="val" id="r1Mo">0</span></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-top:1rem;"><button class="btn btn-ghost" style="padding:0.6rem;" onclick="closeModal('retireModal1')">Cancel</button><button class="btn btn-red" style="padding:0.6rem;" onclick="openRetireModal2()">Proceed</button></div></div></div>
+<div class="modal-overlay" id="retireModal2"><div class="modal"><div class="modal-title" style="color:var(--red);">Final Confirmation</div><div class="modal-sub">Type RETIRE to confirm. Cannot be undone.</div><input class="retire-input" id="retireInput" placeholder="RETIRE" maxlength="6"><div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;"><button class="btn btn-ghost" style="padding:0.6rem;" onclick="closeModal('retireModal2')">Cancel</button><button class="btn btn-red" style="padding:0.6rem;" onclick="confirmRetire()">Retire Now</button></div></div></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SB_URL='https://wezqgmbwaryhjebizzkr.supabase.co';
+const SB_KEY='sb_publishable_rjnhcjz9e62qwVA3AdYpdA_i-S_S4A8';
+const sb=supabase.createClient(SB_URL,SB_KEY);
+
+// Real calendar
+const NOW=new Date();
+const REAL_MONTH=NOW.getMonth()+1;
+const REAL_YEAR=NOW.getFullYear();
+function GM(){return gs?gs.game_month:1;}
+function GY(){return gs?gs.game_year:1;}
+const MN=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const SEAS=['Winter','Winter','Spring','Spring','Spring','Summer','Summer','Summer','Fall','Fall','Fall','Winter'];
+
+const MILESTONES=[
+  {nw:0,label:'Starting Out',unlocks:'Commodities, Silos, Basic Vehicles'},
+  {nw:50000,label:'Gaining Ground',unlocks:'Single Family Homes, Stocks'},
+  {nw:100000,label:'Building Wealth',unlocks:'Duplexes, Index Funds'},
+  {nw:200000,label:'Investor',unlocks:'Apartments, Business Stakes, Farmland'},
+  {nw:500000,label:'Portfolio Player',unlocks:'Commercial Properties'},
+  {nw:1000000,label:'Legacy Wealth',unlocks:'All Assets'},
+];
+
+const VT={'Pickup Truck':{emoji:'🛻',bv:[8000,18000],rm:1.0},'Tractor':{emoji:'🚜',bv:[12000,35000],rm:1.3},'Utility Trailer':{emoji:'🚛',bv:[3000,9000],rm:0.7},'Classic Car':{emoji:'🏎',bv:[15000,55000],rm:1.5},'Van / Box Truck':{emoji:'🚐',bv:[7000,22000],rm:1.1}};
+const VN={'Pickup Truck':['F-150 Work Truck','Ram 1500','Chevy Silverado','GMC Sierra','Dodge Dakota'],'Tractor':['John Deere 5075E','Kubota M6060','Case IH Farmall','New Holland T5','Massey Ferguson 4710'],'Utility Trailer':['Flatbed Utility','Enclosed Cargo','Dump Trailer','Landscape Trailer','Equipment Hauler'],'Classic Car':['1968 Ford Mustang','1972 Chevy C10','1965 Pontiac GTO','1969 Dodge Charger','1957 Chevy Bel Air'],'Van / Box Truck':['Ford Transit 350','Sprinter 2500','Chevy Express','Isuzu Box Truck','GMC Savana']};
+const RJ={mechanical:[{n:'Basic Tune-Up',c:400,m:1,g:15,d:'Oil, filters, belts.'},{n:'Engine Overhaul',c:1200,m:2,g:30,d:'Full inspection.'},{n:'Transmission Rebuild',c:2800,m:2,g:35,d:'Full rebuild.'}],body:[{n:'Dent Removal',c:350,m:1,g:12,d:'PDR on dents.'},{n:'Panel Repair',c:900,m:1,g:22,d:'Rust, panel, primer.'},{n:'Full Respray',c:2200,m:2,g:38,d:'Complete repaint.'}],interior:[{n:'Detail & Clean',c:200,m:1,g:8,d:'Steam clean.'},{n:'Upholstery',c:700,m:1,g:18,d:'Seats, carpet.'},{n:'Full Restore',c:1800,m:2,g:28,d:'Complete overhaul.'}]};
+const PT={
+  'Single Family Home':{emoji:'🏠',rent:[900,2200],val:[120000,320000],vr:0.06,mp:0.008,minNW:50000},
+  'Duplex':{emoji:'🏘',rent:[1400,3200],val:[180000,420000],vr:0.07,mp:0.009,minNW:100000},
+  'Small Apartment Building':{emoji:'🏢',rent:[3000,7000],val:[350000,900000],vr:0.08,mp:0.01,minNW:200000},
+  'Commercial Storefront':{emoji:'🏪',rent:[1800,5000],val:[200000,600000],vr:0.1,mp:0.007,minNW:500000},
+  'Farmland / Acreage':{emoji:'🌾',rent:[400,1200],val:[80000,350000],vr:0.03,mp:0.004,minNW:200000},
+  'Mobile Home Park':{emoji:'🏕',rent:[600,1800],val:[60000,180000],vr:0.04,mp:0.006,minNW:30000},
+  'Vacation Rental':{emoji:'🏖',rent:[2000,5500],val:[150000,450000],vr:0.15,mp:0.012,minNW:100000},
+  'Warehouse / Storage':{emoji:'🏭',rent:[1200,4000],val:[180000,500000],vr:0.05,mp:0.005,minNW:200000},
+  'Rural Cabin':{emoji:'🪵',rent:[800,2200],val:[80000,250000],vr:0.1,mp:0.01,minNW:50000},
+  'Office Space':{emoji:'🏗',rent:[1500,4500],val:[150000,550000],vr:0.12,mp:0.007,minNW:300000},
+};
+const PN={
+  'Single Family Home':['Elm Street Ranch','Oak Grove Colonial','Maple Cottage','Birchwood Bungalow','Pine Ridge Home','Clearwater Drive Home','Sunset Blvd Ranch','Valley View Cottage','Riverbend Colonial','Meadow Lane Bungalow'],
+  'Duplex':['Cedar Lane Duplex','Walnut Ave Units','Hickory Duplex','Sycamore Pair','Willow Creek Units','Brookside Duplex','Ridgeline Two-Unit','Maplewood Pair','Lakeview Duplex','Orchard Street Units'],
+  'Small Apartment Building':['Riverview Apts','Valley Court','Hilltop Flats','Creekside Terrace','Pineview Complex','Blueridge Apartments','Sunrise Court','Clearview Flats','Harborside Units','The Granary Apts'],
+  'Commercial Storefront':['Main Street Retail','Corner Storefront','Downtown Unit','Highway Commerce','Market Row Space','Front Street Shop','Old Town Storefront','Mill Road Retail','Gateway Commercial','Plaza End Cap'],
+  'Farmland / Acreage':['North Field Parcel','River Bottom Acres','Hilltop Farmland','South Meadow','Creek Fork Acres','Timber Ridge Tract','Rolling Pasture','Blacksoil Flats','West Quarter Section','Prairie Edge Parcel'],
+  'Mobile Home Park':['Sunset Mobile Estates','Creekside MHP','Valley View Park','Riverbend Estates','Pines Mobile Court','Meadowlark MHP','Quiet Acres Park','Lakeshore Estates','Blue Sky MHP','Heritage Mobile Park'],
+  'Vacation Rental':['Lakefront Cabin Rental','Mountain View Retreat','River Bend Getaway','Pine Forest Lodge','Sunset Lake House','Creekside Escape','Bluewater Retreat','Cedar Ridge Vacation Home','Valley Vista Rental','Hilltop Haven'],
+  'Warehouse / Storage':[' Industrial Storage Unit','Highway Warehouse','Distribution Center Bay','Cold Storage Facility','Flex Warehouse Space','Logistics Hub Unit','Rural Storage Complex','Grain Storage Annex','Commercial Warehouse Bay','Ag Equipment Storage'],
+  'Rural Cabin':['Pineknot Cabin','Creekside Lodge','Ridgeline Retreat','Hollow Tree Cabin','Foxrun Hideaway','Timber Wolf Lodge','Old Mill Cabin','Stonegate Retreat','Whispering Pines Cabin','Eagle Nest Cabin'],
+  'Office Space':['Professional Plaza Suite','Medical Arts Office','Main Street Office','Corporate Park Unit','Downtown Office Suite','Tech Center Space','Business Commons Office','Mill Building Suite','Commerce Park Office','Riverside Professional'],
+};
+
+
+
+const ACCT_TYPES=[
+  {type:'personal',name:'Personal Checking',interest:0,limit:null,minOpen:0,desc:'Day-to-day spending account.'},
+  {type:'business',name:'Business Checking',interest:0,limit:null,minOpen:0,desc:'Revenue and business expenses.'},
+  {type:'savings',name:'High-Yield Savings',interest:0.038,limit:5000,minOpen:1000,desc:'3.8% APY. $5k/mo transfer limit.'},
+  {type:'money_market',name:'Money Market',interest:0.055,limit:10000,minOpen:10000,desc:'5.5% APY. $10k/mo transfer limit.'},
+  {type:'cd',name:'6-Month CD',interest:0.065,limit:0,minOpen:5000,desc:'6.5% APY. Locked for 6 months.'},
+];
+
+let gs=null,coms=[],silos=[],siloMkt=[],ownVeh=[],vehMkt=[],evts=[],ph={};
+let ownProps=[],propMkt=[],invs=[],ledger=[],loans=[],news=[],legacyRuns=[];
+let bankAccts=[],actFeed=[],creditProfile=null;
+let pendSellVeh=null,pendSellProp=null,ledFilter='all';
+
+// ── INIT ───────────────────────────────────────────────────────
+async function init(){
+  try{
+    setLoading('Connecting to Supabase...',10);
+    await loadAll();
+    setLoading('Checking markets...',40);
+    if(vehMkt.length===0) await seedVehMkt();
+    if(propMkt.length===0) await seedPropMkt();
+    if(news.length===0) await generateNews();
+
+    // Migrate cash to bank accounts if needed
+    if(bankAccts.length>0&&gs.cash>0){
+      const personal=bankAccts.find(a=>a.type==='personal');
+      if(personal&&personal.balance===0&&gs.cash>0){
+        await sb.from('bank_accounts').update({balance:gs.cash}).eq('id',personal.id);
+        personal.balance=gs.cash;gs.cash=0;
+        await sb.from('game_state').update({cash:0}).eq('id',1);
+      }
+    }
+
+    // Catchup
+    setLoading('Checking time...',60);
+    const lastActive=gs.last_active?new Date(gs.last_active):null;
+    if(lastActive){
+      const diffDays=Math.floor((new Date()-lastActive)/(1000*60*60*24));
+      if(diffDays>0){
+        const months=Math.min(diffDays,90);
+        setLoading(`Processing ${months} month${months>1?'s':''} while you were away...`,70);
+        for(let i=0;i<months;i++) await processMonth(true);
+        addActivity('info','Catchup Complete',`${months} month${months>1?'s were':'was'} processed while you were away.`,null,'info');
+      }
+    }
+
+    await sb.from('game_state').update({last_active:new Date().toISOString()}).eq('id',1);
+    setLoading('Rendering...',90);
+    renderAll();
+    setTimeout(()=>document.getElementById('loadingScreen').classList.add('hide'),400);
+  }catch(e){
+    console.error(e);
+    document.getElementById('loadingStatus').textContent='Error: '+e.message;
+    setTimeout(()=>document.getElementById('loadingScreen').classList.add('hide'),2000);
+  }
+}
+
+function setLoading(txt,pct){
+  document.getElementById('loadingStatus').textContent=txt;
+  document.getElementById('loadingBar').style.width=pct+'%';
+}
+
+async function loadAll(){
+  const results=await Promise.all([
+    sb.from('game_state').select('*').eq('id',1).single(),
+    sb.from('commodities').select('*').order('id'),
+    sb.from('silos').select('*').order('id'),
+    sb.from('silo_market').select('*').order('asking_price'),
+    sb.from('vehicles').select('*').order('id'),
+    sb.from('vehicle_market').select('*').eq('available',true).order('id'),
+    sb.from('events_log').select('*').order('created_at',{ascending:false}).limit(30),
+    sb.from('price_history').select('*').order('year').order('month'),
+    sb.from('properties').select('*').order('id'),
+    sb.from('property_market').select('*').eq('available',true).order('id'),
+    sb.from('investments').select('*').order('id'),
+    sb.from('ledger').select('*').order('created_at',{ascending:false}).limit(200),
+    sb.from('loans').select('*').order('id'),
+    sb.from('news_feed').select('*').order('created_at',{ascending:false}).limit(12),
+    sb.from('bank_accounts').select('*').order('id'),
+    sb.from('activity_feed').select('*').order('created_at',{ascending:false}).limit(40),
+    sb.from('credit_profile').select('*').eq('id',1).single(),
+    sb.from('legacy_runs').select('*').order('created_at',{ascending:false}),
+  ]);
+  // 21 queries in order:
+  // 0:gs 1:coms 2:silos 3:siloMkt 4:ownVeh 5:vehMkt 6:evts 7:ph(price_history)
+  // 8:ownProps 9:propMkt 10:invs 11:ledger 12:loans 13:news 14:bankAccts
+  // 15:businesses 16:propProjects 17:actFeed 18:bizMkt 19:creditProfile 20:legacyRuns
+  gs=results[0].data;
+  coms=results[1].data||[];
+  silos=results[2].data||[];
+  siloMkt=results[3].data||[];
+  ownVeh=results[4].data||[];
+  vehMkt=results[5].data||[];
+  evts=results[6].data||[];
+  // results[7] = price_history, handled below
+  ownProps=results[8].data||[];
+  propMkt=results[9].data||[];
+  invs=results[10].data||[];
+  ledger=results[11].data||[];
+  loans=results[12].data||[];
+  news=results[13].data||[];
+  bankAccts=results[14].data||[];
+  actFeed=results[15].data||[];
+  creditProfile=results[16].data||{score:680};
+  legacyRuns=results[17].data||[];
+  ph={};
+  for(const r of(results[7].data||[])){if(!ph[r.commodity_id])ph[r.commodity_id]=[];ph[r.commodity_id].push(r);}
+}
+
+// ── ACTIVITY FEED ──────────────────────────────────────────────
+async function addActivity(cat,title,body,amount,sentiment='neutral'){
+  const row={month:REAL_MONTH,year:REAL_YEAR,day:NOW.getDate(),category:cat,title,body,amount,sentiment};
+  const{data}=await sb.from('activity_feed').insert(row).select().single();
+  if(data)actFeed.unshift(data);
+}
+
+// ── BANK HELPERS ───────────────────────────────────────────────
+function getPrimaryAcct(){return bankAccts.find(a=>a.is_default)||bankAccts[0]||{balance:0,id:null};}
+function getBizAcct(){return bankAccts.find(a=>a.type==='business')||getPrimaryAcct();}
+function getTotalCash(){return bankAccts.reduce((s,a)=>s+a.balance,0);}
+
+async function debit(amount,acctId,cat,sub,desc){
+  const acct=bankAccts.find(a=>a.id===acctId)||getPrimaryAcct();
+  if(!acct)return false;
+  acct.balance-=amount;
+  await sb.from('bank_accounts').update({balance:acct.balance}).eq('id',acct.id);
+  await ledRec(cat,sub,desc,-amount,acct.id,acct.balance);
+  return true;
+}
+
+async function credit(amount,acctId,cat,sub,desc){
+  const acct=bankAccts.find(a=>a.id===acctId)||getPrimaryAcct();
+  if(!acct)return;
+  acct.balance+=amount;
+  await sb.from('bank_accounts').update({balance:acct.balance}).eq('id',acct.id);
+  await ledRec(cat,sub,desc,amount,acct.id,acct.balance);
+}
+
+async function ledRec(cat,sub,desc,amount,acctId,balance){
+  const row={month:REAL_MONTH,year:REAL_YEAR,category:cat,subcategory:sub,description:desc,amount,running_balance:balance||getTotalCash()};
+  const{data}=await sb.from('ledger').insert(row).select().single();
+  if(data)ledger.unshift(data);
+}
+
+// ── SEEDS ──────────────────────────────────────────────────────
+async function seedVehMkt(){const l=genVehListings(4);const{data}=await sb.from('vehicle_market').insert(l).select();vehMkt=data||[];}
+
+async function seedPropMkt(){const l=genPropListings(3);if(l.length>0){const{data}=await sb.from('property_market').insert(l).select();propMkt=data||[];}}
+
+function genVehListings(n){
+  const keys=Object.keys(VT);const out=[];const used=new Set();
+  for(let i=0;i<n;i++){
+    let k;do{k=keys[Math.floor(Math.random()*keys.length)];}while(used.has(k)&&used.size<keys.length);
+    used.add(k);const t=VT[k],names=VN[k];
+    const name=names[Math.floor(Math.random()*names.length)];
+    const year=1985+Math.floor(Math.random()*35);
+    const base=t.bv[0]+Math.random()*(t.bv[1]-t.bv[0]);
+    const cm=20+Math.floor(Math.random()*45),cb=20+Math.floor(Math.random()*45),ci=20+Math.floor(Math.random()*45);
+    const asking=Math.round(base*((cm+cb+ci)/3/100)*0.75);
+    out.push({name,type:k,year,condition_mechanical:cm,condition_body:cb,condition_interior:ci,asking_price:asking,base_value:Math.round(base),listed_month:REAL_MONTH,listed_year:REAL_YEAR,available:true});
+  }
+  return out;
+}
+
+function genPropListings(n){
+  const nw=calcNetWorth();
+  const eligible=Object.entries(PT).filter(([k,t])=>nw>=t.minNW);
+  if(eligible.length===0)return[];
+  const out=[];const usedTypes=new Set();const usedNames=new Set();
+  for(let i=0;i<n;i++){
+    // Pick a type we haven't used yet this batch
+    let available=eligible.filter(([k])=>!usedTypes.has(k));
+    if(available.length===0)available=eligible;
+    const[k,t]=available[Math.floor(Math.random()*available.length)];
+    usedTypes.add(k);
+    // Pick a name we haven't used yet
+    const names=PN[k].filter(nm=>!usedNames.has(nm));
+    const name=(names.length>0?names:PN[k])[Math.floor(Math.random()*(names.length||PN[k].length))];
+    usedNames.add(name);
+    const estVal=Math.round(t.val[0]+Math.random()*(t.val[1]-t.val[0]));
+    const asking=Math.round(estVal*(0.85+Math.random()*0.2));
+    const rent=Math.round(t.rent[0]+Math.random()*(t.rent[1]-t.rent[0]));
+    out.push({name,type:k,asking_price:asking,estimated_value:estVal,monthly_rent:rent,vacancy_rate:t.vr,listed_month:GM(),listed_year:GY(),available:true});
+  }
+  return out;
+}
+
+// ── NEWS ───────────────────────────────────────────────────────
+async function generateNews(){
+  const cycle=gs.economy_cycle||'expansion';
+  const season=SEAS[(GM()-1)%12];
+  const headlines=buildHeadlines(season,cycle);
+  await sb.from('news_feed').insert(headlines.map(h=>({...h,month:REAL_MONTH,year:REAL_YEAR})));
+  const nr=await sb.from('news_feed').select('*').order('created_at',{ascending:false}).limit(12);
+  news=nr.data||[];
+}
+
+function buildHeadlines(season,cycle){
+  const items=[];
+  const ecoMap={
+    expansion:{headline:'Economy Grows for Third Consecutive Quarter',body:'Business investment and consumer confidence remain strong. Asset prices continue upward trend.',signal:'bullish'},
+    peak:{headline:'Market Analysts Flag Overheating Concerns',body:'Multiple indicators suggest the cycle may be peaking. Exercise caution on new long-term commitments.',signal:'bearish'},
+    contraction:{headline:'Economic Slowdown Weighs on Markets',body:'Credit is tightening and consumer spending is softening. Defensive positioning recommended.',signal:'bearish'},
+    recovery:{headline:'Early Recovery Signals Emerge',body:'Leading indicators are turning positive. Patient investors may find opportunity.',signal:'bullish'}
+  };
+  const eco=ecoMap[cycle]||ecoMap.expansion;
+  items.push({headline:eco.headline,body:eco.body,category:'economy',signal:eco.signal});
+  const comMap={
+    Winter:{headline:'Cold Weather Drives Heating Fuel Demand',body:'Propane and fuel stocks seeing strong seasonal demand. Corn and wheat prices firm.',signal:'bullish'},
+    Spring:{headline:'Planting Season Uncertainty Affects Futures',body:'Late spring weather creating volatility in grain futures. Watch corn and soybean prices closely.',signal:'neutral'},
+    Summer:{headline:'Summer Drought Concerns Lift Grain Prices',body:'Dry conditions in key growing regions tightening supply outlook. Buy dips in corn and wheat.',signal:'bullish'},
+    Fall:{headline:'Harvest Pressure Weighs on Commodity Prices',body:'Strong yields are softening grain prices. This may be the best time to accumulate at lower costs.',signal:'bearish'}
+  };
+  const com=comMap[season]||comMap.Spring;
+  items.push({headline:com.headline,body:com.body,category:'commodities',signal:com.signal});
+  const propH=[
+    {headline:'Rural Property Values Hold Steady',body:'Residential and farmland prices remain resilient. Rental demand strong in rural markets.',signal:'bullish'},
+    {headline:'Interest Rates Pressuring Property Markets',body:'Higher rates are cooling buyer demand. Sellers may be more negotiable.',signal:'neutral'},
+    {headline:'Rental Vacancy Rates at Multi-Year Lows',body:'Tight inventory is keeping occupancy high. Landlords reporting very few vacancies.',signal:'bullish'},
+    {headline:'Farmland Demand Outpaces Supply',body:'Agricultural land continues to attract investor interest. Prices firming across rural markets.',signal:'bullish'},
+    {headline:'Commercial Real Estate Softens',body:'Office and retail segments are cooling. Residential rentals remain resilient.',signal:'neutral'},
+  ];
+  items.push(propH[Math.floor(Math.random()*propH.length)]);
+  return items;
+}
+
+function renderNews(){
+  const newsDateEl=document.getElementById('newsDate');
+  if(newsDateEl)newsDateEl.textContent=`${MN[(GM()-1)%12]} Year ${GY()}`;
+  const advisorEl=document.getElementById('advisorCard');
+  if(advisorEl)advisorEl.innerHTML=`<div class="news-item neutral" style="background:var(--surface2);margin-bottom:0.75rem;"><div class="news-cat">💼 Portfolio Advisor</div><div class="news-headline">${genAdvisorTip()}</div></div>`;
+  const newsEl=document.getElementById('newsList');
+  if(!newsEl)return;
+  newsEl.innerHTML=news.length===0
+    ?'<div style="font-family:var(--mono);font-size:0.72rem;color:var(--text3);padding:1.5rem;text-align:center;">Advance the month to generate news.</div>'
+    :news.map(n=>`<div class="news-item ${n.signal||'neutral'}">
+      <div class="news-cat">${(n.category||'').toUpperCase()}</div>
+      <div class="news-headline">${n.headline}</div>
+      ${n.body?`<div class="news-body">${n.body}</div>`:''}
+      ${n.signal?`<div class="news-signal ${n.signal}">● ${n.signal.toUpperCase()}</div>`:''}
+    </div>`).join('');
+}
+
+function genAdvisorTip(){
+  const nw=calcNetWorth(),cash=getTotalCash();
+  const tu=coms.reduce((s,c)=>s+(c.units_owned||0),0);
+  const tc=silos.reduce((s,x)=>s+x.capacity,0);
+  const storagePct=tc>0?(tu/tc*100):0;
+  const rentInc=ownProps.filter(p=>!p.is_vacant).reduce((s,p)=>s+p.monthly_rent,0);
+  const loanP=loans.reduce((s,l)=>s+l.monthly_payment,0);
+  const tips=[];
+  if(storagePct>85) tips.push('⚠ Silos nearly full. Sell commodity positions or purchase more storage before buying more.');
+  if(cash>40000&&nw<80000) tips.push('💡 Significant idle cash. Consider a first property or vehicle flip to put it to work.');
+  if(ownProps.filter(p=>p.is_vacant).length>0) tips.push('🏠 You have vacant properties. Vacancies re-fill naturally — hold if monthly costs allow.');
+  if(loanP>rentInc*0.6&&rentInc>0) tips.push('⚠ Loan payments exceeding 60% of rental income. Consider paying down debt.');
+  if(tips.length===0) tips.push('📈 Portfolio looking healthy. Keep growing and watch for opportunities in the news.');
+  return tips[Math.floor(Math.random()*tips.length)];
+}
+
+// ── RENDER ALL ─────────────────────────────────────────────────
+function renderAll(){
+  renderHeader();renderSidebar();renderDashboard();renderNews();
+  renderCommodities();renderProperties();renderVehicles();
+  renderStocks();renderBanking();renderLoans();renderSilos();renderLedger();renderLegacy();
+}
+
+function renderHeader(){
+  document.getElementById('headerDate').textContent=`${MN[(GM()-1)%12]} — Year ${GY()}`;
+  document.getElementById('headerSeason').textContent=SEAS[(GM()-1)%12];
+  // Market ticker
+  document.getElementById('marketTicker').innerHTML=coms.slice(0,3).map(c=>{
+    const hist=ph[c.id]||[];const prev=hist.length>0?hist[hist.length-1].price:c.current_price;
+    const chg=((c.current_price-prev)/prev*100);
+    return`<div class="ticker-item"><span class="ticker-name">${c.name.substring(0,4).toUpperCase()}</span><span class="ticker-val">${fP(c.current_price)}</span><span class="ticker-chg ${chg>0?'up':chg<0?'down':''}">${chg>0?'▲':'▼'}${Math.abs(chg).toFixed(1)}%</span></div>`;
+  }).join('');
+}
+
+function renderSidebar(){
+  // Accounts
+  document.getElementById('sidebarAccounts').innerHTML=bankAccts.map(a=>`
+    <div class="acct-card" onclick="switchPanel('banking',document.querySelector('.nav-item'))">
+      <div class="acct-name">${a.name}</div>
+      <div class="acct-balance">${fmt(a.balance)}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:0.15rem;">
+        <div class="acct-type">${a.type}</div>
+        ${a.interest_rate>0?`<div class="acct-interest">+${(a.interest_rate*100).toFixed(1)}% APY</div>`:''}
+      </div>
+    </div>`).join('');
+
+  const nw=calcNetWorth(),cash=getTotalCash();
+  const history=getHistory();const prev=history.length>=2?history[history.length-2].value:nw;
+  document.getElementById('sbNW').textContent=fmt(nw);
+
+  const rentInc=ownProps.filter(p=>!p.is_vacant).reduce((s,p)=>s+p.monthly_rent,0);
+  const bizInc=0;
+  const divInc=invs.reduce((s,i)=>s+(i.shares_owned*(i.current_price*(i.dividend_rate||0)/12)),0);
+  const savInc=bankAccts.reduce((s,a)=>s+(a.balance*(a.interest_rate||0)/12),0);
+  const totalInc=rentInc+bizInc+divInc+savInc;
+  const storageCost=coms.reduce((s,c)=>s+(c.units_owned*c.storage_cost_per_unit),0)+silos.reduce((s,x)=>s+x.monthly_cost,0);
+  const maintCost=ownProps.reduce((s,p)=>s+(p.current_value*(PT[p.type]?.mp||0.008)/12),0);
+  const loanCost=loans.reduce((s,l)=>s+l.monthly_payment,0);
+  const totalCost=storageCost+maintCost+loanCost;
+  const net=totalInc-totalCost;
+
+  document.getElementById('sbIncome').textContent='+'+fmt(totalInc)+'/mo';
+  document.getElementById('sbCosts').textContent='-'+fmt(totalCost)+'/mo';
+  const netEl=document.getElementById('sbNet');netEl.textContent=(net>=0?'+':'')+fmt(net)+'/mo';
+  netEl.className='sidebar-stat-value '+(net>=0?'green':'red');
+  document.getElementById('sbCredit').textContent=creditProfile?.score||680;
+  document.getElementById('ecoCycle').textContent=(gs.economy_cycle||'expansion');
+  document.getElementById('ecoCycle').className='eco-cycle '+(gs.economy_cycle||'expansion');
+  document.getElementById('ecoInfl').textContent=((gs.inflation_rate||0.02)*100).toFixed(1)+'%';
+  document.getElementById('ecoRate').textContent=((gs.interest_rate||0.065)*100).toFixed(1)+'%';
+}
+
+function renderDashboard(){
+  const nw=calcNetWorth(),cash=getTotalCash();
+  const history=getHistory();const prev=history.length>=2?history[history.length-2].value:nw;
+  const diff=nw-prev;
+
+  // Quick stats
+  const rentInc=ownProps.filter(p=>!p.is_vacant).reduce((s,p)=>s+p.monthly_rent,0);
+  const bizInc=0;
+  const divInc=invs.reduce((s,i)=>s+(i.shares_owned*(i.current_price*(i.dividend_rate||0)/12)),0);
+  const storageCost=coms.reduce((s,c)=>s+(c.units_owned*c.storage_cost_per_unit),0)+silos.reduce((s,x)=>s+x.monthly_cost,0);
+  const maintCost=ownProps.reduce((s,p)=>s+(p.current_value*(PT[p.type]?.mp||0.008)/12),0);
+  const loanCost=loans.reduce((s,l)=>s+l.monthly_payment,0);
+  const totalInc=rentInc+bizInc+divInc;const totalCost=storageCost+maintCost+loanCost;
+  const net=totalInc-totalCost;
+
+  document.getElementById('quickStats').innerHTML=`
+    <div class="qs-card"><div class="qs-label">Total Cash</div><div class="qs-value blue">${fmt(cash)}</div><div class="qs-sub">across ${bankAccts.length} account${bankAccts.length!==1?'s':''}</div></div>
+    <div class="qs-card"><div class="qs-label">Monthly Net</div><div class="qs-value ${net>=0?'green':'red'}">${net>=0?'+':''}${fmt(net)}</div><div class="qs-sub">income minus costs</div></div>
+    <div class="qs-card"><div class="qs-label">Properties</div><div class="qs-value">${ownProps.length}</div><div class="qs-sub">${ownProps.filter(p=>!p.is_vacant).length} occupied</div></div>`;
+
+  // NW card
+  const pv=ownProps.reduce((s,p)=>s+p.current_value,0);
+  const iv=invs.reduce((s,i)=>s+(i.shares_owned*i.current_price),0);
+  const vv=ownVeh.reduce((s,v)=>s+calcSaleP(v),0);
+  document.getElementById('nwCard').innerHTML=`
+    <div class="nw-label">Total Net Worth</div>
+    <div class="nw-value">${fmt(nw)}</div>
+    <div class="nw-change ${diff>=0?'pos':'neg'}">${diff>=0?'▲ +':'▼ '}${fmt(Math.abs(diff))} vs last month</div>
+    <div class="nw-breakdown">
+      <div class="nw-seg"><div class="nw-seg-label">Cash</div><div class="nw-seg-val">${fmt(cash)}</div></div>
+      <div class="nw-seg"><div class="nw-seg-label">Property</div><div class="nw-seg-val">${fmt(pv)}</div></div>
+      <div class="nw-seg"><div class="nw-seg-label">Investments</div><div class="nw-seg-val">${fmt(iv)}</div></div>
+      <div class="nw-seg"><div class="nw-seg-label">Vehicles</div><div class="nw-seg-val">${fmt(vv)}</div></div>
+    </div>`;
+
+  // Activity feed
+  document.getElementById('activityFeed').innerHTML=actFeed.length===0
+    ?'<div style="padding:1.5rem;font-family:var(--mono);font-size:0.72rem;color:var(--text3);text-align:center;">No activity yet. Advance the month to begin.</div>'
+    :actFeed.slice(0,15).map(a=>`
+      <div class="feed-item">
+        <div class="feed-dot ${a.sentiment==='pos'?'pos':a.sentiment==='neg'?'neg':a.sentiment==='info'?'info':'neu'}"></div>
+        <div><div class="feed-title">${a.title}</div>${a.body?`<div class="feed-body">${a.body}</div>`:''}</div>
+        <div style="text-align:right;">
+          ${a.amount?`<div class="feed-amount ${a.amount>0?'pos':'neg'}">${a.amount>0?'+':''}${fmt(a.amount)}</div>`:''}
+          <div class="feed-meta">${MN[(a.month-1)%12].substring(0,3)} ${a.year}</div>
+        </div>
+      </div>`).join('');
+
+  // Market snapshot
+  document.getElementById('marketSnapshot').innerHTML=`
+    <table class="data-table" style="margin-bottom:1rem;">
+      <thead><tr><th>Commodity</th><th>Price</th><th>Owned</th><th>Value</th></tr></thead>
+      <tbody>${coms.map(c=>`<tr><td class="hi">${c.name}</td><td class="acc">${fP(c.current_price)}</td><td>${c.units_owned.toLocaleString()}</td><td>${fmt(c.units_owned*c.current_price)}</td></tr>`).join('')}</tbody>
+    </table>`;
+}
+
+function openAddAccountModal(){
+  const existing=bankAccts.map(a=>a.type);
+  document.getElementById('accountOptions').innerHTML=ACCT_TYPES.filter(t=>!existing.includes(t.type)||t.type==='personal').map(t=>{
+    const canOpen=getTotalCash()>=t.minOpen;
+    return`<div class="card"><div class="card-title" style="margin-bottom:0.5rem;">${t.name}</div>
+      <div class="card-meta">${t.desc}${t.minOpen>0?`<br>Min balance: ${fmt(t.minOpen)}`:''}${t.limit?`<br>Transfer limit: ${fmt(t.limit)}/mo`:''}</div>
+      <div class="card-footer"><button class="btn btn-primary" onclick="openAccount('${t.type}','${t.name}',${t.interest},${t.limit||0},${t.minOpen})" ${!canOpen?'disabled':''}>${canOpen?'Open Account':'Need '+fmt(t.minOpen)}</button></div></div>`;
+  }).join('');
+  document.getElementById('addAccountModal').classList.add('active');
+}
+
+async function openAccount(type,name,rate,limit,minOpen){
+  const acct=getPrimaryAcct();
+  if(minOpen>0&&acct.balance<minOpen)return showToast(`Need ${fmt(minOpen)} minimum.`,'error');
+  const initBal=minOpen>0?minOpen:0;
+  if(initBal>0){acct.balance-=initBal;await sb.from('bank_accounts').update({balance:acct.balance}).eq('id',acct.id);}
+  const{data:na}=await sb.from('bank_accounts').insert({name,type,balance:initBal,interest_rate:rate,transfer_limit:limit||null,is_default:false,opened_month:REAL_MONTH,opened_year:REAL_YEAR}).select().single();
+  bankAccts.push(na);
+  await addActivity('info',`${name} Opened`,`New account opened with ${fmt(initBal)} initial deposit.`,initBal,'info');
+  showToast(`${name} opened!`,'success');closeModal('addAccountModal');renderAll();
+}
+
+
+function renderCommodities(){
+  const{cur,next}=getMilestone(calcNetWorth());
+  const nw=calcNetWorth();const pct=next?Math.min(((nw-cur.nw)/(next.nw-cur.nw))*100,100):100;
+  const msel=document.getElementById('commMilestone');
+  if(msel)msel.innerHTML=`<div class="ms-label">Milestone</div><div class="ms-name">${cur.label}</div><div class="ms-track"><div class="ms-fill" style="width:${pct}%"></div></div><div class="ms-next">${next?'→ '+next.label+' ('+fmt(next.nw)+')':'Max Level'}</div>`;
+  const tu=coms.reduce((s,x)=>s+(x.units_owned||0),0),tc=silos.reduce((s,x)=>s+x.capacity,0),sl=tc-tu;
+  const csel=document.getElementById('commStorage');if(csel)csel.textContent=`${tu.toLocaleString()} / ${tc.toLocaleString()} units`;
+  const grid=document.getElementById('commodityGrid');if(!grid)return;
+  grid.innerHTML=coms.map(c=>{
+    const prev=c.prev_price||c.current_price,change=c.current_price-prev,pct2=prev>0?(change/prev*100):0;
+    const cc=change>0.001?'up':change<-0.001?'down':'flat';
+    const cs=change>0.001?`▲ +${fP(change)} (+${pct2.toFixed(1)}%)`:change<-0.001?`▼ ${fP(change)} (${pct2.toFixed(1)}%)`:'— unchanged';
+    return`<div class="card"><div class="card-header"><div class="card-title">${c.name}</div><span class="card-badge badge-gray">${c.behavior}</span></div>
+      <div class="card-price">${fP(c.current_price)}<span style="font-size:0.65rem;color:var(--text3)"> /unit</span></div>
+      <div class="card-chg ${cc}">${cs}</div>
+      <div class="sparkline-wrap" onclick="openPriceChart(${c.id})"><canvas class="sparkline" id="spark-${c.id}"></canvas></div>
+      <div class="card-meta">Own: ${c.units_owned.toLocaleString()} · Storage: ${fP(c.storage_cost_per_unit)}/unit/mo<br>Held: ${fmt(c.units_owned*c.current_price)} · Base: ${fP(c.base_price)}</div>
+      <div style="display:flex;gap:0.4rem;align-items:center;flex-wrap:wrap;">
+        <button class="btn btn-success" onclick="buyCom(${c.id})" ${sl<=0?'disabled':''}>Buy</button>
+        <input class="input input-sm" type="number" id="qty-${c.id}" value="100" min="1">
+        <button class="btn btn-danger" onclick="sellCom(${c.id})" ${c.units_owned<=0?'disabled':''}>Sell</button>
+      </div>
+      ${sl<=0?'<div style="font-family:var(--mono);font-size:0.6rem;color:var(--red);margin-top:0.35rem;">⚠ Storage full</div>':''}
+    </div>`;
+  }).join('');
+  requestAnimationFrame(()=>coms.forEach(c=>{const cv=document.getElementById(`spark-${c.id}`);if(cv)drawSparkline(cv,ph[c.id]||[],c.current_price,c.base_price);}));
+}
+
+function renderProperties(){
+  const nw=calcNetWorth();
+  const owned=document.getElementById('ownedPropList');
+  if(owned)owned.innerHTML=ownProps.length===0
+    ?'<div style="font-family:var(--mono);font-size:0.72rem;color:var(--text3);padding:1.25rem;text-align:center;border:1px dashed var(--border);margin-bottom:1rem;">No properties owned. Browse listings below.</div>'
+    :`<div class="card-grid">${ownProps.map(p=>{
+      const ti=PT[p.type]||{emoji:'🏠',mp:0.008};
+      const maint=Math.round(p.current_value*ti.mp/12);
+      const net=p.is_vacant?-maint:p.monthly_rent-maint;
+      const appr=p.current_value-p.purchase_price;
+      return`<div class="card"><div class="card-header"><div class="card-title">${ti.emoji} ${p.name}</div><span class="vbadge ${p.is_vacant?'vac':'occ'}">${p.is_vacant?'Vacant':'Occupied'}</span></div>
+        <div class="card-meta">Value: ${fmt(p.current_value)} <span style="color:${appr>=0?'var(--green)':'var(--red)'}">(${appr>=0?'+':''}${fmt(appr)})</span><br>
+        Rent: ${fmt(p.monthly_rent)} · Maint: -${fmt(maint)}<br>
+        Net: <span style="color:${net>=0?'var(--green)':'var(--red)'}">${net>=0?'+':''}${fmt(net)}/mo</span></div>
+        <div class="card-footer"><button class="btn btn-danger" onclick="openSellProp(${p.id})">Sell</button></div></div>`;
+    }).join('')}</div>`;
+
+  const mkt=document.getElementById('propMarketGrid');if(!mkt)return;
+  mkt.innerHTML=propMkt.length===0
+    ?'<div style="font-family:var(--mono);font-size:0.72rem;color:var(--text3);padding:1.25rem;text-align:center;border:1px dashed var(--border);">No listings. Advance the month to refresh.</div>'
+    :propMkt.map(p=>{
+      const ti=PT[p.type]||{emoji:'🏠',minNW:0};
+      const ca=getTotalCash()>=p.asking_price,unlocked=nw>=(ti.minNW||0);
+      const yld=((p.monthly_rent*12)/p.asking_price*100).toFixed(1);
+      return`<div class="card ${!unlocked?'locked':''}"><div class="card-header"><div class="card-title">${ti.emoji} ${p.name}</div><span class="card-badge badge-cyan">${p.type}</span></div>
+        <div class="card-price">${fmt(p.asking_price)}</div>
+        <div class="card-meta">Est. value: ${fmt(p.estimated_value)}<br>Rent: ${fmt(p.monthly_rent)}/mo · Yield: ${yld}%</div>
+        ${!unlocked?`<div class="lock-overlay">🔒 Unlock at ${fmt(ti.minNW)}</div>`:`<div class="card-footer"><button class="btn btn-primary" onclick="buyProp(${p.id})" ${!ca?'disabled':''}>${ca?'Purchase':'Need '+fmt(p.asking_price-getTotalCash())+' more'}</button></div>`}
+      </div>`;
+    }).join('');
+}
+
+function renderVehicles(){
+  const owned=document.getElementById('ownedVehList');
+  if(owned)owned.innerHTML=ownVeh.length===0
+    ?'<div style="font-family:var(--mono);font-size:0.72rem;color:var(--text3);padding:1.25rem;text-align:center;border:1px dashed var(--border);margin-bottom:1rem;">No vehicles owned.</div>'
+    :`<div class="card-grid">${ownVeh.map(v=>{
+      const ti=VT[v.type]||{emoji:'🚗',rm:1};const est=calcSaleP(v),profit=est-v.purchase_price;
+      const inR=v.repair_mechanical_months>0||v.repair_body_months>0||v.repair_interior_months>0;
+      return`<div class="card"><div class="card-header"><div class="card-title">${ti.emoji} ${v.year} ${v.name}</div><span class="card-badge badge-gray">${v.type}</span></div>
+        <div class="card-meta">Paid: ${fmt(v.purchase_price)} · Est: <span style="color:${profit>=0?'var(--green)':'var(--red)'}">${fmt(est)}</span> (${profit>=0?'+':''}${fmt(profit)})${inR?'<br><span style="color:var(--accent3)">⏳ Repairs in progress</span>':''}</div>
+        ${condBars(v.condition_mechanical,v.condition_body,v.condition_interior)}
+        <div class="card-footer"><button class="btn btn-primary" onclick="openRepair(${v.id})">Repair</button><button class="btn btn-danger" onclick="openSellVeh(${v.id})">Sell</button></div></div>`;
+    }).join('')}</div>`;
+  const mkt=document.getElementById('vehMarketGrid');if(!mkt)return;
+  mkt.innerHTML=vehMkt.length===0
+    ?'<div style="font-family:var(--mono);font-size:0.72rem;color:var(--text3);padding:1.25rem;text-align:center;border:1px dashed var(--border);">No listings. Advance the month to refresh.</div>'
+    :vehMkt.map(v=>{
+      const ti=VT[v.type]||{emoji:'🚗'};const avg=Math.round((v.condition_mechanical+v.condition_body+v.condition_interior)/3);
+      const lbl=avg>=65?'Fair':avg>=40?'Poor':'Parts Only';const ca=getTotalCash()>=v.asking_price;
+      return`<div class="card"><div class="card-header"><div class="card-title">${ti.emoji} ${v.year} ${v.name}</div><span class="card-badge badge-gray">${v.type}</span></div>
+        <div class="card-price">${fmt(v.asking_price)}</div>
+        <div class="card-meta">Restored value: ~${fmt(v.base_value)}<br>Condition: <span style="color:${condColor(avg)}">${lbl} (${avg}/100)</span></div>
+        ${condBars(v.condition_mechanical,v.condition_body,v.condition_interior)}
+        <div class="card-footer"><button class="btn btn-success" onclick="buyVeh(${v.id})" ${!ca?'disabled':''}>${ca?'Buy':'Need '+fmt(v.asking_price-getTotalCash())+' more'}</button></div></div>`;
+    }).join('');
+}
+
+function renderStocks(){
+  const nw=calcNetWorth();
+  const grid=document.getElementById('stockGrid');if(!grid)return;
+  grid.innerHTML=invs.map(inv=>{
+    const prev=inv.prev_price||inv.current_price,ch=inv.current_price-prev,pct=prev>0?(ch/prev*100):0;
+    const cc=ch>0.001?'up':ch<-0.001?'down':'flat';
+    const held=inv.shares_owned>0,hv=inv.shares_owned*inv.current_price,cost=inv.shares_owned*inv.avg_buy_price,gl=hv-cost;
+    const unit=inv.type==='business'?'stake':'share';
+    const typeLabel=inv.type==='stock'?'Stock':inv.type==='index'?'Index':'Business';
+    const minNW=inv.type==='stock'?50000:inv.type==='index'?100000:200000;
+    const unlocked=nw>=minNW;
+    const badgeClass=inv.type==='stock'?'badge-blue':inv.type==='index'?'badge-green':'badge-orange';
+    return`<div class="card ${!unlocked?'locked':''}">
+      <div class="card-header"><div class="card-title">${inv.name} <span style="font-family:var(--mono);font-size:0.6rem;color:var(--text3);">${inv.ticker}</span></div><span class="card-badge ${badgeClass}">${typeLabel}</span></div>
+      <div class="card-price">${fP(inv.current_price)}<span style="font-size:0.62rem;color:var(--text3)"> /${unit}</span></div>
+      <div class="card-chg ${cc}">${ch>0.001?`▲ +${fP(ch)} (+${pct.toFixed(1)}%)`:ch<-0.001?`▼ ${fP(ch)} (${pct.toFixed(1)}%)`:'— unchanged'}</div>
+      <div class="card-meta">${inv.dividend_rate>0?`Div: ${(inv.dividend_rate*100).toFixed(1)}%/yr · `:''}${held?`Own: ${inv.shares_owned} ${unit}s · ${fmt(hv)}<br>G/L: <span style="color:${gl>=0?'var(--green)':'var(--red)'}">${gl>=0?'+':''}${fmt(gl)}</span>`:'Not owned'}</div>
+      ${!unlocked?`<div class="lock-overlay">🔒 Unlock at ${fmt(minNW)}</div>`:`<div style="display:flex;gap:0.4rem;align-items:center;flex-wrap:wrap;margin-top:0.5rem;">
+        <input class="input input-sm" type="number" id="ish-${inv.id}" value="${inv.type==='business'?1:10}" min="1">
+        <button class="btn btn-success" onclick="buyInv(${inv.id})">Buy</button>
+        <button class="btn btn-danger" onclick="sellInv(${inv.id})" ${!held?'disabled':''}>Sell</button>
+      </div>`}
+    </div>`;
+  }).join('');
+}
+
+function renderBanking(){
+  const list=document.getElementById('bankAccountList');
+  if(list)list.innerHTML=`<div class="card-grid">${bankAccts.map(a=>`
+    <div class="card"><div class="card-header"><div class="card-title">${a.name}</div><span class="card-badge badge-cyan">${a.type}</span></div>
+      <div style="font-family:var(--mono);font-size:1.5rem;color:var(--text);margin-bottom:0.5rem;">${fmt(a.balance)}</div>
+      <div class="card-meta">${a.interest_rate>0?`APY: ${(a.interest_rate*100).toFixed(1)}% · Est: +${fmt(Math.round(a.balance*a.interest_rate/12))}/mo`:'No interest'}${a.transfer_limit?`<br>Transfer limit: ${fmt(a.transfer_limit)}/mo`:''}</div>
+      <div class="card-footer"><button class="btn btn-primary" onclick="openTransferModal()">Transfer</button></div></div>`).join('')}</div>`;
+  // Transfer widget
+  const tw=document.getElementById('transferWidget');
+  if(tw)tw.innerHTML=`
+    <div style="background:var(--surface);border:1px solid var(--border);padding:1.25rem;max-width:480px;">
+      <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:0.75rem;align-items:center;margin-bottom:1rem;">
+        <div><div style="font-family:var(--mono);font-size:0.6rem;color:var(--text3);margin-bottom:0.35rem;">FROM</div>
+          <select class="acct-select" id="twFrom">${bankAccts.map(a=>`<option value="${a.id}">${a.name} (${fmt(a.balance)})</option>`).join('')}</select></div>
+        <div style="font-size:1.2rem;color:var(--text3);text-align:center;">→</div>
+        <div><div style="font-family:var(--mono);font-size:0.6rem;color:var(--text3);margin-bottom:0.35rem;">TO</div>
+          <select class="acct-select" id="twTo">${bankAccts.map((a,i)=>`<option value="${a.id}" ${i===1?'selected':''}>${a.name} (${fmt(a.balance)})</option>`).join('')}</select></div>
+      </div>
+      <div style="margin-bottom:1rem;"><div style="font-family:var(--mono);font-size:0.6rem;color:var(--text3);margin-bottom:0.35rem;">AMOUNT</div>
+        <input class="input" style="width:100%;" type="number" id="twAmount" placeholder="0.00"></div>
+      <button class="btn btn-primary" style="width:100%;padding:0.6rem;" onclick="doTransfer()">Transfer Funds</button>
+    </div>`;
+}
+
+async function doTransfer(){
+  const fromId=parseInt(document.getElementById('twFrom')?.value||document.getElementById('transferFrom')?.value);
+  const toId=parseInt(document.getElementById('twTo')?.value||document.getElementById('transferTo')?.value);
+  const amount=parseFloat(document.getElementById('twAmount')?.value||document.getElementById('transferAmount')?.value)||0;
+  if(fromId===toId)return showToast('Select different accounts.','error');
+  if(amount<=0)return showToast('Enter a valid amount.','error');
+  const from=bankAccts.find(a=>a.id===fromId),to=bankAccts.find(a=>a.id===toId);
+  if(!from||!to)return showToast('Account not found.','error');
+  if(amount>from.balance)return showToast('Insufficient balance.','error');
+  if(from.transfer_limit&&amount>from.transfer_limit)return showToast(`Transfer limit is ${fmt(from.transfer_limit)}/mo.`,'error');
+  from.balance-=amount;to.balance+=amount;
+  await Promise.all([sb.from('bank_accounts').update({balance:from.balance}).eq('id',from.id),sb.from('bank_accounts').update({balance:to.balance}).eq('id',to.id)]);
+  await ledRec('Transfer','Internal',`${from.name} → ${to.name}`,-amount,from.id,from.balance);
+  showToast(`${fmt(amount)} transferred.`,'success');
+  closeModal('transferModal');renderAll();
+}
+
+function openTransferModal(){
+  const opts=bankAccts.map(a=>`<option value="${a.id}">${a.name} (${fmt(a.balance)})</option>`).join('');
+  const f=document.getElementById('transferFrom'),t=document.getElementById('transferTo');
+  if(f)f.innerHTML=opts;if(t){t.innerHTML=opts;if(t.options.length>1)t.selectedIndex=1;}
+  document.getElementById('transferModal').classList.add('active');
+}
+
+async function confirmSellVeh(){
+  const v=ownVeh.find(x=>x.id===pendSellVeh);if(!v)return;
+  const sale=calcSaleP(v);const acct=getPrimaryAcct();acct.balance+=sale;
+  await Promise.all([sb.from('bank_accounts').update({balance:acct.balance}).eq('id',acct.id),sb.from('vehicles').delete().eq('id',v.id)]);
+  await ledRec('Vehicle','Sale',`Sold ${v.year} ${v.name}`,sale,acct.id,acct.balance);
+  await addActivity('pos',`Sold ${v.year} ${v.name}`,`Vehicle sold for ${fmt(sale)}. Net: ${fmt(sale-v.purchase_price)}.`,sale,'pos');
+  ownVeh=ownVeh.filter(x=>x.id!==v.id);
+  showToast(`Sold for ${fmt(sale)}!`,'success');closeModal('sellVehModal');renderAll();
+}
+
+async function confirmSellProp(){
+  const p=ownProps.find(x=>x.id===pendSellProp);if(!p)return;
+  const acct=getPrimaryAcct();acct.balance+=p.current_value;
+  await Promise.all([sb.from('bank_accounts').update({balance:acct.balance}).eq('id',acct.id),sb.from('properties').delete().eq('id',p.id)]);
+  await ledRec('Property','Sale',`Sold ${p.name}`,p.current_value,acct.id,acct.balance);
+  await addActivity('pos',`Property Sold: ${p.name}`,`Sold for ${fmt(p.current_value)}.`,p.current_value,'pos');
+  ownProps=ownProps.filter(x=>x.id!==p.id);
+  showToast(`Sold for ${fmt(p.current_value)}!`,'success');closeModal('sellPropModal');renderAll();
+}
+
+function renderLoans(){
+  const score=creditProfile?.score||680;
+  const scoreColor=score>=750?'var(--green)':score>=680?'var(--accent)':score>=620?'var(--accent3)':'var(--red)';
+  const scoreLabel=score>=750?'Excellent':score>=680?'Good':score>=620?'Fair':'Poor';
+  document.getElementById('creditCard').innerHTML=`
+    <div style="background:var(--surface);border:1px solid var(--border);padding:1.25rem;display:flex;align-items:center;gap:2rem;margin-bottom:1rem;">
+      <div class="credit-arc"><div class="credit-score-num" style="color:${scoreColor}">${score}</div><div class="credit-score-label">${scoreLabel}</div></div>
+      <div style="flex:1;font-family:var(--mono);font-size:0.68rem;color:var(--text2);line-height:1.8;">
+        On-time payments: <span style="color:var(--text)">${creditProfile?.on_time_payments||0}</span><br>
+        Missed payments: <span style="color:${(creditProfile?.missed_payments||0)>0?'var(--red)':'var(--text)'}">${creditProfile?.missed_payments||0}</span><br>
+        Total borrowed: <span style="color:var(--text)">${fmt(creditProfile?.total_borrowed||0)}</span><br>
+        <span style="color:var(--text3)">Score improves with on-time payments</span>
+      </div>
+    </div>`;
+
+  document.getElementById('activeLoanList').innerHTML=loans.length===0
+    ?'<div style="font-family:var(--mono);font-size:0.72rem;color:var(--text3);margin-bottom:1rem;">No active loans.</div>'
+    :loans.map(l=>`<div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--red);padding:1rem;margin-bottom:0.75rem;">
+      <div style="font-family:var(--mono);font-size:1rem;color:var(--red);margin-bottom:0.35rem;">-${fmt(l.remaining_balance)} remaining</div>
+      <div style="font-family:var(--mono);font-size:0.65rem;color:var(--text2);line-height:1.8;">Payment: ${fmt(l.monthly_payment)}/mo · Rate: ${(l.interest_rate*100).toFixed(1)}%<br>Months left: ${l.months_remaining}</div>
+    </div>`).join('');
+
+  const rate=gs.interest_rate||0.065;
+  const loanOpts=[{amt:10000,term:12},{amt:25000,term:24},{amt:50000,term:36},{amt:100000,term:48},{amt:250000,term:60},{amt:500000,term:84}];
+  document.getElementById('loanOptions').innerHTML=loanOpts.map(o=>{
+    const monthly=Math.round((o.amt*rate/12)/(1-Math.pow(1+rate/12,-o.term)));
+    return`<div class="card"><div class="card-title" style="margin-bottom:0.5rem;">${fmt(o.amt)}</div>
+      <div class="card-price">${fmt(monthly)}/mo</div>
+      <div class="card-meta">${o.term} months · ${(rate*100).toFixed(1)}% annual<br>Total: ${fmt(monthly*o.term)}</div>
+      <div class="card-footer"><button class="btn btn-primary" onclick="takeLoan(${o.amt},${o.term},${monthly})">Borrow</button></div></div>`;
+  }).join('');
+}
+
+function renderSilos(){
+  const tu=coms.reduce((s,c)=>s+(c.units_owned||0),0),tc=silos.reduce((s,x)=>s+x.capacity,0),pct=tc>0?Math.min(tu/tc*100,100):0;
+  document.getElementById('ownedSiloList').innerHTML=silos.map(s=>`
+    <div style="background:var(--surface);border:1px solid var(--border);padding:1rem;margin-bottom:0.75rem;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:0.5rem;"><div style="font-weight:600;">🏚 ${s.name}</div><span class="card-badge badge-green">Owned</span></div>
+      <div style="font-family:var(--mono);font-size:0.65rem;color:var(--text2);margin-bottom:0.5rem;">Capacity: ${s.capacity.toLocaleString()} · Monthly: ${fmt(s.monthly_cost)}/mo</div>
+      <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:0.6rem;color:var(--text3);margin-bottom:0.25rem;"><span>Fill level</span><span>${pct.toFixed(1)}%</span></div>
+      <div class="prog-track"><div class="prog-fill ${pct>=100?'red':pct>=75?'orange':''}" style="width:${pct}%"></div></div>
+    </div>`).join('');
+
+  document.getElementById('siloMarketGrid').innerHTML=siloMkt.map(s=>{
+    const ao=silos.some(x=>x.name===s.name),ca=getTotalCash()>=s.asking_price;
+    return`<div class="card"><div class="card-header"><div class="card-title">🏗 ${s.name}</div><span class="card-badge ${ao?'badge-green':'badge-gray'}">${ao?'Owned':'Available'}</span></div>
+      <div class="card-price">${fmt(s.asking_price)}</div>
+      <div class="card-meta">Capacity: ${s.capacity.toLocaleString()} units<br>Monthly: ${fmt(s.monthly_cost)}/mo</div>
+      <div class="card-footer">${ao?`<span style="font-family:var(--mono);font-size:0.62rem;color:var(--green);">Already owned</span>`:`<button class="btn btn-primary" onclick="buySilo(${s.id})" ${!ca?'disabled':''}>${ca?'Purchase':'Need '+fmt(s.asking_price-getTotalCash())+' more'}</button>`}</div></div>`;
+  }).join('');
+}
+
+function renderLedger(){
+  const cats=['all','Income','Expense','Property','Investment','Vehicle','Commodity','Loan','Transfer'];
+  document.getElementById('ledgerFilters').innerHTML=cats.map(c=>`<button class="btn ${ledFilter===c?'btn-primary':'btn-ghost'}" style="padding:0.3rem 0.6rem;" onclick="filterLedger('${c}',this)">${c==='all'?'All':c}</button>`).join('');
+  const filtered=ledFilter==='all'?ledger:ledger.filter(r=>r.category===ledFilter);
+  const catStyle={Income:'color:var(--green)',Expense:'color:var(--red)',Property:'color:var(--accent)',Investment:'color:var(--accent2)',Vehicle:'color:var(--accent3)',Commodity:'color:var(--text2)',Loan:'color:var(--blue)',Transfer:'color:var(--text3)'};
+  document.getElementById('ledgerBody').innerHTML=filtered.length===0
+    ?`<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:2rem;">No transactions.</td></tr>`
+    :filtered.map(r=>`<tr>
+      <td>${MN[(r.month-1)%12].substring(0,3)} ${r.year}</td>
+      <td>${bankAccts.find(a=>a.id===r.account_id)?.name||'—'}</td>
+      <td><span style="font-family:var(--mono);font-size:0.6rem;${catStyle[r.category]||''}">${r.category}${r.subcategory?` · ${r.subcategory}`:''}</span></td>
+      <td class="hi">${r.description}</td>
+      <td class="${r.amount>=0?'pos':'neg'}">${r.amount>=0?'+':''}${fmt(r.amount)}</td>
+      <td class="acc">${fmt(r.running_balance)}</td>
+    </tr>`).join('');
+}
+
+function filterLedger(cat){ledFilter=cat;renderLedger();}
+
+function renderLegacy(){
+  document.getElementById('legacyList').innerHTML=legacyRuns.length===0
+    ?'<div style="font-family:var(--mono);font-size:0.72rem;color:var(--text3);padding:2rem;text-align:center;border:1px dashed var(--border);">No retirements yet. Keep building.</div>'
+    :legacyRuns.map(r=>`<div class="legacy-card"><div class="legacy-worth">${fmt(r.final_net_worth)}</div><div class="legacy-meta">Peak: ${fmt(r.peak_net_worth)} · Months: ${r.months_played}<br>Retired: ${MN[(r.retired_month-1)%12]}, Year ${r.retired_year}</div></div>`).join('');
+}
+
+function renderPortfolio(){
+  const history=getHistory();drawNWChart(history);
+  const nw=calcNetWorth(),all=history.map(h=>h.value),peak=all.length?Math.max(...all,nw):nw;
+  const months=(REAL_YEAR-2024)*12+REAL_MONTH;
+  const pv=ownProps.reduce((s,p)=>s+p.current_value,0);
+  const iv=invs.reduce((s,i)=>s+(i.shares_owned*i.current_price),0);
+  const vv=ownVeh.reduce((s,v)=>s+calcSaleP(v),0);
+  const lv=loans.reduce((s,l)=>s+l.remaining_balance,0);
+  document.getElementById('portfolioStats').innerHTML=`
+    <div class="card"><div class="pb">All-Time Peak</div><div style="font-family:var(--mono);font-size:1.1rem;color:var(--accent4);">${fmt(peak)}</div></div>
+    <div class="card"><div class="pb">Property Value</div><div style="font-family:var(--mono);font-size:1.1rem;">${fmt(pv)}</div></div>
+    <div class="card"><div class="pb">Investments</div><div style="font-family:var(--mono);font-size:1.1rem;">${fmt(iv)}</div></div>
+    <div class="card"><div class="pb">Vehicles</div><div style="font-family:var(--mono);font-size:1.1rem;">${fmt(vv)}</div></div>
+    <div class="card"><div class="pb">Total Debt</div><div style="font-family:var(--mono);font-size:1.1rem;color:var(--red);">${fmt(lv)}</div></div>
+    <div class="card"><div class="pb">Growth</div><div style="font-family:var(--mono);font-size:1.1rem;color:${nw>=25000?'var(--green)':'var(--red)'};">${((nw/25000-1)*100).toFixed(1)}%</div></div>`;
+}
+
+// ── SPARKLINES ─────────────────────────────────────────────────
+function drawSparkline(el,history,cur,basePrice){
+  const ctx=el.getContext('2d');const dpr=window.devicePixelRatio||1;
+  const W=el.offsetWidth||240,H=38;el.width=W*dpr;el.height=H*dpr;ctx.scale(dpr,dpr);ctx.clearRect(0,0,W,H);
+  const prices=[...history.map(h=>h.price),cur];
+  if(prices.length<2){ctx.fillStyle='#4a5568';ctx.font='9px JetBrains Mono';ctx.fillText('No history yet',8,H/2+3);return;}
+  const mn=Math.min(...prices),mx=Math.max(...prices),range=mx-mn||mn*0.01||1;
+  const pts=prices.map((v,i)=>({x:(i/(prices.length-1))*(W-4)+2,y:H-4-((v-mn)/range)*(H-8)}));
+  ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);pts.slice(1).forEach(p=>ctx.lineTo(p.x,p.y));
+  ctx.lineTo(pts[pts.length-1].x,H);ctx.lineTo(pts[0].x,H);ctx.closePath();
+  const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'rgba(0,212,255,0.15)');g.addColorStop(1,'rgba(0,212,255,0)');ctx.fillStyle=g;ctx.fill();
+  ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);pts.slice(1).forEach(p=>ctx.lineTo(p.x,p.y));ctx.strokeStyle='var(--accent)';ctx.lineWidth=1.5;ctx.stroke();
+  // Base price line
+  if(basePrice){const by=H-4-((basePrice-mn)/range)*(H-8);ctx.beginPath();ctx.setLineDash([3,3]);ctx.moveTo(2,by);ctx.lineTo(W-2,by);ctx.strokeStyle='rgba(74,85,104,0.6)';ctx.lineWidth=1;ctx.stroke();ctx.setLineDash([]);}
+  const last=pts[pts.length-1];ctx.beginPath();ctx.arc(last.x,last.y,3,0,Math.PI*2);ctx.fillStyle='var(--accent)';ctx.fill();
+}
+
+function openPriceChart(cid){
+  const c=coms.find(x=>x.id===cid);const hist=ph[cid]||[];
+  const all=[...hist.map(h=>h.price),c.current_price];
+  document.getElementById('pmTitle').textContent=`${c.name} — Price History`;
+  document.getElementById('pmSub').textContent=`${c.behavior} behavior · Base ${fP(c.base_price)}/unit`;
+  document.getElementById('pmChartLabel').textContent=`${all.length} data points`;
+  const mn=Math.min(...all),mx=Math.max(...all),avg=all.reduce((s,v)=>s+v,0)/all.length;
+  document.getElementById('pmStats').innerHTML=`
+    <div style="background:var(--surface2);border:1px solid var(--border);padding:0.5rem;"><div style="font-family:var(--mono);font-size:0.56rem;text-transform:uppercase;color:var(--text3);">Current</div><div style="font-family:var(--mono);font-size:0.82rem;color:var(--accent);">${fP(c.current_price)}</div></div>
+    <div style="background:var(--surface2);border:1px solid var(--border);padding:0.5rem;"><div style="font-family:var(--mono);font-size:0.56rem;text-transform:uppercase;color:var(--text3);">High</div><div style="font-family:var(--mono);font-size:0.82rem;color:var(--green);">${fP(mx)}</div></div>
+    <div style="background:var(--surface2);border:1px solid var(--border);padding:0.5rem;"><div style="font-family:var(--mono);font-size:0.56rem;text-transform:uppercase;color:var(--text3);">Low</div><div style="font-family:var(--mono);font-size:0.82rem;color:var(--red);">${fP(mn)}</div></div>
+    <div style="background:var(--surface2);border:1px solid var(--border);padding:0.5rem;"><div style="font-family:var(--mono);font-size:0.56rem;text-transform:uppercase;color:var(--text3);">Avg</div><div style="font-family:var(--mono);font-size:0.82rem;">${fP(avg)}</div></div>`;
+  const rows=[...hist,{month:REAL_MONTH,year:REAL_YEAR,price:c.current_price,_c:true}];
+  document.getElementById('pmTable').innerHTML=`<thead><tr><th>Period</th><th>Price</th><th>Change</th><th>vs Base</th></tr></thead><tbody>${rows.map((r,i)=>{
+    const pv=i>0?rows[i-1].price:r.price;const chg=r.price-pv;const vb=((r.price-c.base_price)/c.base_price*100);
+    const cc=chg>0.001?'up':chg<-0.001?'down':'';
+    return`<tr style="border-bottom:1px solid var(--border);"><td style="font-family:var(--mono);font-size:0.68rem;padding:0.35rem 0.5rem;color:var(--text);">${MN[((r.month||1)-1)%12].substring(0,3)} ${r.year||REAL_YEAR}${r._c?' ◀':''}</td><td style="font-family:var(--mono);font-size:0.68rem;padding:0.35rem 0.5rem;color:var(--accent);">${fP(r.price)}</td><td style="font-family:var(--mono);font-size:0.68rem;padding:0.35rem 0.5rem;color:${cc==='up'?'var(--green)':cc==='down'?'var(--red)':'var(--text3)'};">${i===0?'—':(chg>0?'+':'')+fP(chg)}</td><td style="font-family:var(--mono);font-size:0.68rem;padding:0.35rem 0.5rem;color:${vb>0?'var(--green)':vb<0?'var(--red)':'var(--text3)'};">${vb>0?'+':''}${vb.toFixed(1)}%</td></tr>`;
+  }).reverse().join('')}</tbody>`;
+  document.getElementById('priceModal').classList.add('active');
+  requestAnimationFrame(()=>{const cv=document.getElementById('priceChart');drawFullChart(cv,rows.map(r=>r.price),rows.map(r=>`${MN[((r.month||1)-1)%12].substring(0,3)}`),c.base_price);});
+}
+
+function drawFullChart(cv,prices,labels,basePrice){
+  const ctx=cv.getContext('2d');const dpr=window.devicePixelRatio||1;
+  const W=cv.offsetWidth||560,H=160;cv.width=W*dpr;cv.height=H*dpr;ctx.scale(dpr,dpr);ctx.clearRect(0,0,W,H);
+  if(prices.length<2){ctx.fillStyle='#4a5568';ctx.font='11px JetBrains Mono';ctx.fillText('Not enough data.',20,H/2);return;}
+  const pad={t:8,r:12,b:24,l:48};const cw=W-pad.l-pad.r,ch=H-pad.t-pad.b;
+  const mn=Math.min(...prices)*0.97,mx=Math.max(...prices)*1.03,range=mx-mn||1;
+  ctx.strokeStyle='#1e2d3d';ctx.lineWidth=1;
+  for(let i=0;i<=4;i++){const y=pad.t+(i/4)*ch;ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(W-pad.r,y);ctx.stroke();ctx.fillStyle='#4a5568';ctx.font='8px JetBrains Mono';ctx.textAlign='right';ctx.fillText(fP(mx-(i/4)*range),pad.l-3,y+3);}
+  const step=prices.length>14?2:1;ctx.fillStyle='#4a5568';ctx.font='8px JetBrains Mono';ctx.textAlign='center';
+  labels.forEach((lbl,i)=>{if(i%step!==0&&i!==labels.length-1)return;const x=pad.l+(i/(prices.length-1))*cw;ctx.fillText(lbl,x,H-pad.b+11);});
+  if(basePrice){const by=pad.t+ch-((basePrice-mn)/range)*ch;ctx.beginPath();ctx.setLineDash([4,4]);ctx.moveTo(pad.l,by);ctx.lineTo(W-pad.r,by);ctx.strokeStyle='rgba(74,85,104,0.5)';ctx.lineWidth=1;ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='#4a5568';ctx.font='8px JetBrains Mono';ctx.textAlign='left';ctx.fillText('BASE',pad.l+2,by-2);}
+  const pts=prices.map((v,i)=>({x:pad.l+(i/(prices.length-1))*cw,y:pad.t+ch-((v-mn)/range)*ch}));
+  ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);pts.slice(1).forEach(p=>ctx.lineTo(p.x,p.y));ctx.lineTo(pts[pts.length-1].x,pad.t+ch);ctx.lineTo(pts[0].x,pad.t+ch);ctx.closePath();
+  const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'rgba(0,212,255,0.18)');g.addColorStop(1,'rgba(0,212,255,0)');ctx.fillStyle=g;ctx.fill();
+  ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);pts.slice(1).forEach(p=>ctx.lineTo(p.x,p.y));ctx.strokeStyle='var(--accent)';ctx.lineWidth=2;ctx.stroke();
+  pts.forEach((p,i)=>{ctx.beginPath();ctx.arc(p.x,p.y,i===pts.length-1?3.5:1.5,0,Math.PI*2);ctx.fillStyle=i===pts.length-1?'var(--accent)':'rgba(0,212,255,0.5)';ctx.fill();});
+}
+
+function drawNWChart(history){
+  const cv=document.getElementById('wealthChart');if(!cv)return;
+  const ctx=cv.getContext('2d');const dpr=window.devicePixelRatio||1;
+  cv.width=(cv.offsetWidth||560)*dpr;cv.height=180*dpr;ctx.scale(dpr,dpr);
+  const W=cv.offsetWidth||560,H=180;ctx.clearRect(0,0,W,H);
+  if(history.length<2){ctx.fillStyle='#4a5568';ctx.font='11px JetBrains Mono';ctx.fillText('Advance the month to see your chart.',20,H/2);return;}
+  const vals=history.map(h=>h.value);const mn=Math.min(...vals)*0.95,mx=Math.max(...vals)*1.05,range=mx-mn||1;
+  const pts=vals.map((v,i)=>({x:(i/(vals.length-1))*(W-40)+20,y:H-20-((v-mn)/range)*(H-40)}));
+  ctx.strokeStyle='#1e2d3d';ctx.lineWidth=1;
+  for(let i=0;i<=4;i++){const y=20+(i/4)*(H-40);ctx.beginPath();ctx.moveTo(20,y);ctx.lineTo(W-20,y);ctx.stroke();}
+  ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);pts.slice(1).forEach(p=>ctx.lineTo(p.x,p.y));ctx.strokeStyle='var(--accent2)';ctx.lineWidth=2;ctx.stroke();
+  ctx.lineTo(pts[pts.length-1].x,H-20);ctx.lineTo(pts[0].x,H-20);ctx.closePath();
+  const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'rgba(0,255,136,0.15)');g.addColorStop(1,'rgba(0,255,136,0)');ctx.fillStyle=g;ctx.fill();
+  pts.forEach(p=>{ctx.beginPath();ctx.arc(p.x,p.y,2.5,0,Math.PI*2);ctx.fillStyle='var(--accent2)';ctx.fill();});
+}
+
+// ── CONDITION BARS ─────────────────────────────────────────────
+function condColor(v){return v>=75?'var(--green)':v>=45?'var(--accent)':'var(--red)';}
+function condBars(m,b,i){return`<div class="cond-bars"><div class="cond-row"><div class="cond-label">Mechanical</div><div class="cond-track"><div class="cond-fill" style="width:${m}%;background:${condColor(m)}"></div></div><div class="cond-val">${m}</div></div><div class="cond-row"><div class="cond-label">Body & Paint</div><div class="cond-track"><div class="cond-fill" style="width:${b}%;background:${condColor(b)}"></div></div><div class="cond-val">${b}</div></div><div class="cond-row"><div class="cond-label">Interior</div><div class="cond-track"><div class="cond-fill" style="width:${i}%;background:${condColor(i)}"></div></div><div class="cond-val">${i}</div></div></div>`;}
+
+// ── VEHICLE ACTIONS ────────────────────────────────────────────
+function openRepair(vid){
+  const v=ownVeh.find(x=>x.id===vid);const ti=VT[v.type]||{emoji:'🚗',rm:1};
+  document.getElementById('repairTitle').textContent=`${ti.emoji} ${v.year} ${v.name}`;
+  let html=condBars(v.condition_mechanical,v.condition_body,v.condition_interior);
+  for(const[cat,lbl]of[['mechanical','Mechanical'],['body','Body & Paint'],['interior','Interior']]){
+    html+=`<div style="font-family:var(--mono);font-size:0.62rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);margin:0.75rem 0 0.35rem;">${lbl}</div>`;
+    const mf=`repair_${cat}_months`,cf=`condition_${cat}`;
+    if(v[mf]>0){html+=`<div style="font-family:var(--mono);font-size:0.65rem;color:var(--accent3);padding:0.4rem 0.6rem;background:rgba(255,107,53,0.08);border:1px solid rgba(255,107,53,0.2);">⏳ In progress — ${v[mf]} month(s) remaining</div>`;}
+    else{html+=RJ[cat].map(j=>{
+      const cost=Math.round(j.c*ti.rm),newC=Math.min(100,v[cf]+j.g),ca=getTotalCash()>=cost,maxed=v[cf]>=98;
+      return`<div style="border:1px solid var(--border);padding:0.75rem;margin-bottom:0.4rem;background:var(--surface2);">
+        <div style="display:flex;justify-content:space-between;margin-bottom:0.3rem;"><span style="font-family:var(--mono);font-size:0.75rem;color:var(--text);">${j.n}</span><span style="font-family:var(--mono);font-size:0.75rem;color:var(--accent);">${fmt(cost)}</span></div>
+        <div style="font-family:var(--mono);font-size:0.62rem;color:var(--text2);margin-bottom:0.5rem;">${j.d} · ${j.m} mo · <span style="color:var(--accent2)">+${j.g} → ${newC}/100</span></div>
+        ${maxed?`<span style="font-family:var(--mono);font-size:0.6rem;color:var(--green);">Maxed</span>`:`<button class="btn btn-primary" style="width:100%;" onclick="startRepair(${v.id},'${cat}',${cost},${j.m},${j.g})" ${!ca?'disabled':''}>${ca?'Start Repair':'Need '+fmt(cost-getTotalCash())+' more'}</button>`}
+      </div>`;
+    }).join('');}
+  }
+  document.getElementById('repairContent').innerHTML=html;
+  document.getElementById('repairModal').classList.add('active');
+}
+
+async function startRepair(vid,cat,cost,months,gain){
+  const acct=getPrimaryAcct();
+  if(acct.balance<cost)return showToast('Not enough cash.','error');
+  const v=ownVeh.find(x=>x.id===vid);
+  acct.balance-=cost;v[`repair_${cat}_months`]=months;v[`repair_${cat}_progress`]=gain;
+  await Promise.all([
+    sb.from('bank_accounts').update({balance:acct.balance}).eq('id',acct.id),
+    sb.from('vehicles').update({[`repair_${cat}_months`]:months,[`repair_${cat}_progress`]:gain}).eq('id',vid),
+  ]);
+  await ledRec('Vehicle','Repair',`${v.year} ${v.name} — ${cat}`,-cost,acct.id,acct.balance);
+  showToast(`Repair started — ${months} month${months>1?'s':''}.`,'success');closeModal('repairModal');renderAll();
+}
+
+function openSellVeh(vid){
+  pendSellVeh=vid;const v=ownVeh.find(x=>x.id===vid);const ti=VT[v.type]||{emoji:'🚗'};
+  const est=calcSaleP(v),profit=est-v.purchase_price;
+  document.getElementById('svTitle').textContent=`Sell ${ti.emoji} ${v.year} ${v.name}`;
+  document.getElementById('svContent').innerHTML=`<div style="background:var(--surface2);border:1px solid var(--border);padding:0.875rem;">
+    <div class="sum-row"><span class="lbl">Avg condition</span><span class="val">${Math.round((v.condition_mechanical+v.condition_body+v.condition_interior)/3)}/100</span></div>
+    <div class="sum-row"><span class="lbl">What you paid</span><span class="val">${fmt(v.purchase_price)}</span></div>
+    <div class="sum-row"><span class="lbl">Sale price</span><span class="val" style="color:var(--accent)">${fmt(est)}</span></div>
+    <div class="sum-row"><span class="lbl">Profit / Loss</span><span class="val ${profit>=0?'pos':'neg'}">${profit>=0?'+':''}${fmt(profit)}</span></div>
+  </div>`;
+  document.getElementById('sellVehModal').classList.add('active');
+}
+
+async function confirmSellVeh(){
+  const v=ownVeh.find(x=>x.id===pendSellVeh);if(!v)return;
+  const sale=calcSaleP(v);const acct=getPrimaryAcct();acct.balance+=sale;
+  await Promise.all([
+    sb.from('bank_accounts').update({balance:acct.balance}).eq('id',acct.id),
+    sb.from('vehicles').delete().eq('id',v.id),
+  ]);
+  await ledRec('Vehicle','Sale',`Sold ${v.year} ${v.name}`,sale,acct.id,acct.balance);
+  await addActivity('pos',`Sold ${v.year} ${v.name}`,`Vehicle sold for ${fmt(sale)}. Net profit: ${fmt(sale-v.purchase_price)}.`,sale,'pos');
+  ownVeh=ownVeh.filter(x=>x.id!==v.id);
+  showToast(`Sold for ${fmt(sale)}!`,'success');closeModal('sellVehModal');renderAll();
+}
+
+function calcSaleP(v){const ti=VT[v.type]||{rm:1};const avg=(v.condition_mechanical+v.condition_body+v.condition_interior)/3;return Math.round(v.base_value*(0.4+(avg/100)*0.7)*ti.rm);}
+
+async function buyVeh(mid){
+  const v=vehMkt.find(x=>x.id===mid);if(!v)return;
+  const acct=getPrimaryAcct();
+  if(acct.balance<v.asking_price)return showToast('Not enough cash.','error');
+  acct.balance-=v.asking_price;
+  const{data:nv}=await sb.from('vehicles').insert({name:v.name,type:v.type,year:v.year,condition_mechanical:v.condition_mechanical,condition_body:v.condition_body,condition_interior:v.condition_interior,purchase_price:v.asking_price,base_value:v.base_value,purchased_month:REAL_MONTH,purchased_year:REAL_YEAR}).select().single();
+  await Promise.all([sb.from('bank_accounts').update({balance:acct.balance}).eq('id',acct.id),sb.from('vehicle_market').update({available:false}).eq('id',mid)]);
+  await ledRec('Vehicle','Purchase',`Purchased ${v.year} ${v.name}`,-v.asking_price,acct.id,acct.balance);
+  await addActivity('neg',`Purchased ${v.year} ${v.name}`,`Vehicle acquired for ${fmt(v.asking_price)}.`,-v.asking_price,'neg');
+  ownVeh.push(nv);vehMkt=vehMkt.filter(x=>x.id!==mid);
+  showToast(`Bought ${v.year} ${v.name}.`,'success');renderAll();
+}
+
+// ── PROPERTY ACTIONS ───────────────────────────────────────────
+async function buyProp(mid){
+  const p=propMkt.find(x=>x.id===mid);if(!p)return;
+  const acct=getPrimaryAcct();
+  if(acct.balance<p.asking_price)return showToast('Not enough cash.','error');
+  acct.balance-=p.asking_price;
+  const{data:np}=await sb.from('properties').insert({name:p.name,type:p.type,purchase_price:p.asking_price,current_value:p.estimated_value,monthly_rent:p.monthly_rent,vacancy_rate:p.vacancy_rate,maintenance_cost:0,is_vacant:false,purchased_month:REAL_MONTH,purchased_year:REAL_YEAR}).select().single();
+  await Promise.all([sb.from('bank_accounts').update({balance:acct.balance}).eq('id',acct.id),sb.from('property_market').update({available:false}).eq('id',mid)]);
+  await ledRec('Property','Purchase',`Purchased ${p.name}`,-p.asking_price,acct.id,acct.balance);
+  await addActivity('neg',`Property Acquired: ${p.name}`,`${PT[p.type]?.emoji||'🏠'} Purchased for ${fmt(p.asking_price)}. Est. value ${fmt(p.estimated_value)}.`,-p.asking_price,'neg');
+  ownProps.push(np);propMkt=propMkt.filter(x=>x.id!==mid);
+  showToast(`Purchased ${p.name}.`,'success');renderAll();
+}
+
+function openSellProp(pid){
+  pendSellProp=pid;const p=ownProps.find(x=>x.id===pid);const ti=PT[p.type]||{emoji:'🏠'};
+  const profit=p.current_value-p.purchase_price;
+  document.getElementById('spTitle').textContent=`Sell ${ti.emoji} ${p.name}`;
+  document.getElementById('spContent').innerHTML=`<div style="background:var(--surface2);border:1px solid var(--border);padding:0.875rem;">
+    <div class="sum-row"><span class="lbl">Current value</span><span class="val" style="color:var(--accent)">${fmt(p.current_value)}</span></div>
+    <div class="sum-row"><span class="lbl">Paid</span><span class="val">${fmt(p.purchase_price)}</span></div>
+    <div class="sum-row"><span class="lbl">Appreciation</span><span class="val ${profit>=0?'pos':'neg'}">${profit>=0?'+':''}${fmt(profit)}</span></div>
+  </div>`;
+  document.getElementById('sellPropModal').classList.add('active');
+}
+
+async function confirmSellProp(){
+  const p=ownProps.find(x=>x.id===pendSellProp);if(!p)return;
+  const acct=getPrimaryAcct();acct.balance+=p.current_value;
+  await Promise.all([sb.from('bank_accounts').update({balance:acct.balance}).eq('id',acct.id),sb.from('properties').delete().eq('id',p.id)]);
+  await ledRec('Property','Sale',`Sold ${p.name}`,p.current_value,acct.id,acct.balance);
+  await addActivity('pos',`Property Sold: ${p.name}`,`Sold for ${fmt(p.current_value)}. Net gain: ${fmt(p.current_value-p.purchase_price)}.`,p.current_value,'pos');
+  ownProps=ownProps.filter(x=>x.id!==p.id);
+  showToast(`Sold for ${fmt(p.current_value)}!`,'success');closeModal('sellPropModal');renderAll();
+}
+
+// ── COMMODITIES ────────────────────────────────────────────────
+async function buyCom(id){
+  const c=coms.find(x=>x.id===id);const qty=parseInt(document.getElementById(`qty-${id}`).value)||0;
+  if(qty<=0)return showToast('Enter a valid quantity.','error');
+  const tu=coms.reduce((s,x)=>s+(x.units_owned||0),0),tc=silos.reduce((s,x)=>s+x.capacity,0);
+  if(qty>tc-tu)return showToast(`Only ${tc-tu} storage units available.`,'error');
+  const cost=qty*c.current_price;const acct=getPrimaryAcct();
+  if(cost>acct.balance)return showToast(`Need ${fmt(cost)}, have ${fmt(acct.balance)}.`,'error');
+  acct.balance-=cost;c.units_owned+=qty;
+  await Promise.all([sb.from('bank_accounts').update({balance:acct.balance}).eq('id',acct.id),sb.from('commodities').update({units_owned:c.units_owned}).eq('id',id)]);
+  await ledRec('Commodity','Purchase',`Bought ${qty} ${c.name} @ ${fP(c.current_price)}`,-cost,acct.id,acct.balance);
+  showToast(`Bought ${qty} units of ${c.name}.`,'success');renderAll();
+}
+
+async function sellCom(id){
+  const c=coms.find(x=>x.id===id);const qty=parseInt(document.getElementById(`qty-${id}`).value)||0;
+  if(qty<=0)return showToast('Enter a valid quantity.','error');
+  if(qty>c.units_owned)return showToast(`Only own ${c.units_owned}.`,'error');
+  const rev=qty*c.current_price;const acct=getPrimaryAcct();acct.balance+=rev;c.units_owned-=qty;
+  await Promise.all([sb.from('bank_accounts').update({balance:acct.balance}).eq('id',acct.id),sb.from('commodities').update({units_owned:c.units_owned}).eq('id',id)]);
+  await ledRec('Commodity','Sale',`Sold ${qty} ${c.name} @ ${fP(c.current_price)}`,rev,acct.id,acct.balance);
+  showToast(`Sold ${qty} units for ${fmt(rev)}.`,'success');renderAll();
+}
+
+// ── INVESTMENTS ────────────────────────────────────────────────
+async function buyInv(id){
+  const inv=invs.find(x=>x.id===id);const shares=parseFloat(document.getElementById(`ish-${id}`).value)||0;
+  if(shares<=0)return showToast('Enter a valid amount.','error');
+  const cost=shares*inv.current_price;const acct=getPrimaryAcct();
+  if(cost>acct.balance)return showToast(`Need ${fmt(cost)}.`,'error');
+  const newAvg=(inv.shares_owned*inv.avg_buy_price+cost)/(inv.shares_owned+shares);
+  acct.balance-=cost;inv.shares_owned+=shares;inv.avg_buy_price=newAvg;
+  await Promise.all([sb.from('bank_accounts').update({balance:acct.balance}).eq('id',acct.id),sb.from('investments').update({shares_owned:inv.shares_owned,avg_buy_price:newAvg}).eq('id',id)]);
+  await ledRec('Investment','Purchase',`Bought ${shares} ${inv.ticker} @ ${fP(inv.current_price)}`,-cost,acct.id,acct.balance);
+  showToast(`Bought ${shares} ${inv.ticker}.`,'success');renderAll();
+}
+
+async function sellInv(id){
+  const inv=invs.find(x=>x.id===id);const shares=parseFloat(document.getElementById(`ish-${id}`).value)||0;
+  if(shares<=0)return showToast('Enter a valid amount.','error');
+  if(shares>inv.shares_owned)return showToast(`Only own ${inv.shares_owned}.`,'error');
+  const rev=shares*inv.current_price;const acct=getPrimaryAcct();acct.balance+=rev;inv.shares_owned-=shares;
+  await Promise.all([sb.from('bank_accounts').update({balance:acct.balance}).eq('id',acct.id),sb.from('investments').update({shares_owned:inv.shares_owned}).eq('id',id)]);
+  await ledRec('Investment','Sale',`Sold ${shares} ${inv.ticker} @ ${fP(inv.current_price)}`,rev,acct.id,acct.balance);
+  showToast(`Sold ${shares} ${inv.ticker} for ${fmt(rev)}.`,'success');renderAll();
+}
+
+// ── SILOS ──────────────────────────────────────────────────────
+async function buySilo(sid){
+  const s=siloMkt.find(x=>x.id===sid);if(!s)return;
+  const acct=getPrimaryAcct();
+  if(acct.balance<s.asking_price)return showToast('Not enough cash.','error');
+  acct.balance-=s.asking_price;
+  const{data:ns}=await sb.from('silos').insert({name:s.name,capacity:s.capacity,monthly_cost:s.monthly_cost}).select().single();
+  await sb.from('bank_accounts').update({balance:acct.balance}).eq('id',acct.id);
+  await ledRec('Expense','Silo',`Purchased ${s.name}`,-s.asking_price,acct.id,acct.balance);
+  silos.push(ns);showToast(`Purchased ${s.name}!`,'success');renderAll();
+}
+
+// ── LOANS ──────────────────────────────────────────────────────
+async function takeLoan(amount,term,monthly){
+  if(loans.length>=3)return showToast('Max 3 active loans.','error');
+  const rate=gs.interest_rate||0.065;const acct=getPrimaryAcct();
+  acct.balance+=amount;
+  const{data:nl}=await sb.from('loans').insert({amount,remaining_balance:amount,interest_rate:rate,monthly_payment:monthly,term_months:term,months_remaining:term,purpose:'General',taken_month:REAL_MONTH,taken_year:REAL_YEAR}).select().single();
+  await sb.from('bank_accounts').update({balance:acct.balance}).eq('id',acct.id);
+  await ledRec('Loan','Draw',`Loan: ${fmt(amount)} at ${(rate*100).toFixed(1)}%`,amount,acct.id,acct.balance);
+  if(creditProfile){creditProfile.total_borrowed=(creditProfile.total_borrowed||0)+amount;await sb.from('credit_profile').update({total_borrowed:creditProfile.total_borrowed}).eq('id',1);}
+  loans.push(nl);showToast(`Loan of ${fmt(amount)} received.`,'success');renderAll();
+}
+
+// ── END MONTH ──────────────────────────────────────────────────
+async function endMonth(){
+  document.getElementById('endMonthBtn').disabled=true;
+  await processMonth(false);
+  document.getElementById('endMonthBtn').disabled=false;
+}
+
+async function processMonth(silent=false){
+  const summary={events:[],rentNet:0,storageCost:0,loanCost:0};
+  const primaryAcct=getPrimaryAcct();
+
+  // 1. Savings interest
+  for(const acct of bankAccts){
+    if(acct.interest_rate>0&&acct.balance>0){
+      const int=Math.round(acct.balance*acct.interest_rate/12);
+      acct.balance+=int;
+      await sb.from('bank_accounts').update({balance:acct.balance}).eq('id',acct.id);
+      if(!silent)await ledRec('Income','Interest',`Interest on ${acct.name}`,int,acct.id,acct.balance);
+    }
+  }
+
+  // 2. Storage costs
+  let storageCost=coms.reduce((s,c)=>s+(c.units_owned*c.storage_cost_per_unit),0)+silos.reduce((s,x)=>s+x.monthly_cost,0);
+  if(storageCost>0){
+    primaryAcct.balance-=storageCost;
+    await sb.from('bank_accounts').update({balance:primaryAcct.balance}).eq('id',primaryAcct.id);
+    if(!silent)await ledRec('Expense','Storage','Monthly storage costs',-storageCost,primaryAcct.id,primaryAcct.balance);
+    summary.storageCost=storageCost;
+  }
+
+  // 3. Loan payments
+  let totalLoanP=0;const loanUpdates=[];
+  for(const l of loans){
+    const interest=l.remaining_balance*l.interest_rate/12;
+    const principal=l.monthly_payment-interest;
+    const newBal=Math.max(0,l.remaining_balance-principal);
+    const newRem=l.months_remaining-1;
+    primaryAcct.balance-=l.monthly_payment;totalLoanP+=l.monthly_payment;
+    if(newRem<=0)loanUpdates.push({id:l.id,done:true});
+    else{l.remaining_balance=newBal;l.months_remaining=newRem;loanUpdates.push({id:l.id,remaining_balance:newBal,months_remaining:newRem,done:false});}
+  }
+  if(totalLoanP>0){
+    await sb.from('bank_accounts').update({balance:primaryAcct.balance}).eq('id',primaryAcct.id);
+    if(!silent)await ledRec('Loan','Payment','Loan payment(s)',-totalLoanP,primaryAcct.id,primaryAcct.balance);
+    summary.loanCost=totalLoanP;
+    if(creditProfile){creditProfile.on_time_payments++;creditProfile.score=Math.min(850,creditProfile.score+2);await sb.from('credit_profile').update({on_time_payments:creditProfile.on_time_payments,score:creditProfile.score}).eq('id',1);}
+  }
+  for(const lu of loanUpdates){if(lu.done){await sb.from('loans').delete().eq('id',lu.id);loans=loans.filter(x=>x.id!==lu.id);}else{await sb.from('loans').update({remaining_balance:lu.remaining_balance,months_remaining:lu.months_remaining}).eq('id',lu.id);}}
+
+  // 4. Property income
+  let totalRent=0,totalMaint=0;const propUpdates=[];
+  for(const p of ownProps){
+    const ti=PT[p.type]||{mp:0.008,vr:0.05};
+    const maint=Math.round(p.current_value*ti.mp/12);
+    if(p.is_vacant){if(Math.random()>0.55){p.is_vacant=false;summary.events.push({text:`New tenant at ${p.name}.`,cls:'good'});}}
+    else if(Math.random()<ti.vr/12){p.is_vacant=true;summary.events.push({text:`Tenant vacated ${p.name}.`,cls:'bad'});}
+    const rent=p.is_vacant?0:p.monthly_rent;
+    const net=rent-maint;totalRent+=rent;totalMaint+=maint;
+    const cycle=gs.economy_cycle||'expansion';
+    const appRate=((0.025+Math.random()*0.04)*(cycle==='expansion'?1.2:cycle==='contraction'?0.4:1))/12;
+    p.current_value=Math.round(p.current_value*(1+appRate));
+    propUpdates.push({id:p.id,is_vacant:p.is_vacant,current_value:p.current_value});
+    if(net!==0){primaryAcct.balance+=net;}
+  }
+  summary.rentNet=totalRent-totalMaint;
+  if(totalRent>0){await sb.from('bank_accounts').update({balance:primaryAcct.balance}).eq('id',primaryAcct.id);if(!silent)await ledRec('Income','Rent',`Rental income — ${ownProps.filter(p=>!p.is_vacant).length} props`,totalRent,primaryAcct.id,primaryAcct.balance);}
+  if(totalMaint>0&&!silent)await ledRec('Expense','Maintenance','Property maintenance',-totalMaint,primaryAcct.id,primaryAcct.balance);
+
+  // 5. Business income
+
+  // 6. Dividends
+  let totalDiv=0;const invUpdates=[];
+  for(const inv of invs){
+    let np=inv.current_price;
+    const cycle=gs.economy_cycle||'expansion';const cm=cycle==='expansion'?1.005:cycle==='contraction'?0.995:1.0;
+    if(inv.behavior==='volatile'){np+=np*(Math.random()-0.47)*0.09;if(np<inv.base_price*0.3)np=inv.base_price*0.3;if(np>inv.base_price*4)np=inv.base_price*4;}
+    else if(inv.behavior==='steady'){np+=np*(Math.random()-0.46)*0.025;if(np<inv.base_price*0.6)np=inv.base_price*0.6;}
+    else if(inv.behavior==='business'){
+      if((REAL_MONTH-1)%3===2&&inv.shares_owned>0){
+        const dist=Math.round(inv.shares_owned*inv.current_price*(0.05+Math.random()*0.09));
+        primaryAcct.balance+=dist;totalDiv+=dist;
+        summary.events.push({text:`${inv.name} paid quarterly distribution: ${fmt(dist)}.`,cls:'good'});
+        if(!silent){await sb.from('bank_accounts').update({balance:primaryAcct.balance}).eq('id',primaryAcct.id);await ledRec('Income','Distribution',`${inv.ticker} quarterly dist`,dist,primaryAcct.id,primaryAcct.balance);}
+      }
+      np+=np*(Math.random()-0.47)*0.04;
+    }
+    np=Math.max(np,0.5);
+    if(inv.dividend_rate>0&&inv.shares_owned>0&&inv.behavior!=='business'){
+      const div=Math.round(inv.shares_owned*np*inv.dividend_rate/12);
+      if(div>0){primaryAcct.balance+=div;totalDiv+=div;}
+    }
+    invUpdates.push({id:inv.id,current_price:parseFloat(np.toFixed(2)),prev_price:inv.current_price});
+    inv.prev_price=inv.current_price;inv.current_price=np;
+  }
+  if(totalDiv>0){await sb.from('bank_accounts').update({balance:primaryAcct.balance}).eq('id',primaryAcct.id);if(!silent)await ledRec('Income','Dividend','Investment dividends',totalDiv,primaryAcct.id,primaryAcct.balance);}
+
+  // 7. Vehicle repairs
+  const repairUpdates=[];
+  for(const v of ownVeh){
+    const u={};let changed=false;
+    for(const cat of['mechanical','body','interior']){
+      const mf=`repair_${cat}_months`,pf=`repair_${cat}_progress`,cf=`condition_${cat}`;
+      if(v[mf]>0){v[mf]--;u[mf]=v[mf];changed=true;if(v[mf]===0){v[cf]=Math.min(100,v[cf]+v[pf]);v[pf]=0;u[cf]=v[cf];u[pf]=0;summary.events.push({text:`✓ ${v.year} ${v.name} ${cat} repair complete.`,cls:'good'});}}
+    }
+    if(changed)repairUpdates.push({id:v.id,updates:u});
+  }
+
+  // 8. Price history + commodity prices
+  const phInserts=coms.map(c=>({commodity_id:c.id,price:c.current_price,month:REAL_MONTH,year:REAL_YEAR}));
+  await sb.from('price_history').insert(phInserts);
+  for(const r of phInserts){if(!ph[r.commodity_id])ph[r.commodity_id]=[];ph[r.commodity_id].push(r);if(ph[r.commodity_id].length>24)ph[r.commodity_id].shift();}
+  coms.forEach(c=>{c.prev_price=c.current_price;c.current_price=parseFloat(calcNewPrice(c,GM()).toFixed(4));});
+
+  // 9. Economy cycle
+  let eco=gs.economy_cycle||'expansion';let ecoM=(gs.economy_month||0)+1;
+  const cycles={expansion:18,peak:6,contraction:12,recovery:8};
+  if(ecoM>=cycles[eco]){const next={expansion:'peak',peak:'contraction',contraction:'recovery',recovery:'expansion'};eco=next[eco];ecoM=0;summary.events.push({text:`Economy entering ${eco} phase.`,cls:eco==='expansion'||eco==='recovery'?'good':'bad'});}
+
+  // 10. Market event
+  const event=genEvent(eco);
+  if(event&&event.impact!==0){primaryAcct.balance+=event.impact;await sb.from('bank_accounts').update({balance:primaryAcct.balance}).eq('id',primaryAcct.id);if(!silent)await ledRec(event.impact>0?'Income':'Expense','Event',event.text,event.impact,primaryAcct.id,primaryAcct.balance);}
+
+  // 11. Rotate markets
+  const staleV=vehMkt.filter(v=>v.listed_year<REAL_YEAR||(v.listed_year===REAL_YEAR&&v.listed_month<REAL_MONTH));
+  if(staleV.length>0||vehMkt.length<3){
+    if(staleV.length>0)await sb.from('vehicle_market').update({available:false}).in('id',staleV.map(x=>x.id));
+    vehMkt=vehMkt.filter(v=>!staleV.find(s=>s.id===v.id));
+    const need=Math.max(0,4-vehMkt.length);
+    if(need>0){const fresh=genVehListings(need);const{data}=await sb.from('vehicle_market').insert(fresh).select();if(data)vehMkt.push(...data);}
+  }
+  const staleP=propMkt.filter(p=>p.listed_year<GY()||(p.listed_year===GY()&&p.listed_month<GM()));
+  // Always rotate all property listings each month for fresh variety
+  if(propMkt.length>0)await sb.from('property_market').update({available:false}).in('id',propMkt.map(x=>x.id));
+  propMkt=[];
+  const freshProps=genPropListings(4);
+  if(freshProps.length>0){const{data}=await sb.from('property_market').insert(freshProps).select();if(data)propMkt=data;}
+
+  // 12. Net worth snapshot
+  const nw=calcNetWorth();
+  let history=gs.net_worth_history||[];
+  if(typeof history==='string'){try{history=JSON.parse(history);}catch(e){history=[];}}
+  if(!Array.isArray(history))history=[];
+  history.push({month:REAL_MONTH,year:REAL_YEAR,value:nw});
+  gs.net_worth_history=history;gs.economy_cycle=eco;gs.economy_month=ecoM;
+
+  // 13. Generate news for next view
+  await generateNews();
+
+  // 14. Save all
+  // Advance game month
+let newGM=(gs.game_month||1)+1, newGY=gs.game_year||1;
+if(newGM>12){newGM=1;newGY++;}
+gs.game_month=newGM;gs.game_year=newGY;
+await sb.from('game_state').update({net_worth_history:history,economy_cycle:eco,economy_month:ecoM,inflation_rate:gs.inflation_rate,interest_rate:gs.interest_rate,last_active:new Date().toISOString(),game_month:newGM,game_year:newGY}).eq('id',1);
+  await Promise.all([
+    ...coms.map(c=>sb.from('commodities').update({current_price:c.current_price,prev_price:c.prev_price}).eq('id',c.id)),
+    ...invUpdates.map(({id,current_price,prev_price})=>sb.from('investments').update({current_price,prev_price}).eq('id',id)),
+    ...propUpdates.map(({id,...u})=>sb.from('properties').update(u).eq('id',id)),
+    ...repairUpdates.map(({id,updates})=>sb.from('vehicles').update(updates).eq('id',id)),
+  ]);
+
+  // Activity feed entries
+  if(summary.rentNet!==0)await addActivity(summary.rentNet>0?'pos':'neg','Rental Income',`${ownProps.filter(p=>!p.is_vacant).length} properties occupied. Net rent: ${fmt(summary.rentNet)}.`,summary.rentNet,summary.rentNet>0?'pos':'neg');
+  if(event&&event.impact!==0)await addActivity(event.impact>0?'pos':'neg',event.text,'',event.impact,event.impact>0?'pos':'neg');
+
+  if(event){const er=await sb.from('events_log').insert({month:REAL_MONTH,year:REAL_YEAR,event_text:event.text,financial_impact:event.impact});evts.unshift({month:REAL_MONTH,year:REAL_YEAR,event_text:event.text,financial_impact:event.impact});}
+  const af=await sb.from('activity_feed').select('*').order('created_at',{ascending:false}).limit(40);actFeed=af.data||[];
+  const lr=await sb.from('ledger').select('*').order('created_at',{ascending:false}).limit(200);ledger=lr.data||[];
+
+  if(!silent)showMonthModal(summary,event,nw);
+}
+
+function showMonthModal(summary,event,nw){
+  document.getElementById('mmTitle').textContent=`${MN[(GM()-1)%12]} Year ${GY()} — Month Complete`;
+  document.getElementById('mmSub').textContent="Here's what happened this month";
+  let html=`
+    <div class="sum-row"><span class="lbl">Net rent income</span><span class="val ${summary.rentNet>=0?'pos':'neg'}">${summary.rentNet>=0?'+':''}${fmt(summary.rentNet)}</span></div>
+    <div class="sum-row"><span class="lbl">Storage costs</span><span class="val neg">-${fmt(summary.storageCost)}</span></div>
+    <div class="sum-row"><span class="lbl">Loan payments</span><span class="val neg">-${fmt(summary.loanCost)}</span></div>
+    <div class="sum-row"><span class="lbl">Net worth</span><span class="val" style="color:var(--accent)">${fmt(nw)}</span></div>`;
+  if(summary.events.length>0){
+    html+=`<div style="font-family:var(--mono);font-size:0.6rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);margin:1rem 0 0.4rem;">Events</div>`;
+    html+=summary.events.map(e=>`<div class="m-evt ${e.cls}">${e.text}</div>`).join('');
+  }
+  if(event){html+=`<div style="font-family:var(--mono);font-size:0.6rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);margin:1rem 0 0.4rem;">Market Event</div><div class="m-evt ${event.impact>0?'good':event.impact<0?'bad':''}">${event.text}${event.impact!==0?`<div style="margin-top:0.3rem;font-family:var(--mono);font-size:0.68rem;color:${event.impact>0?'var(--green)':'var(--red)'}">${event.impact>0?'+':''}${fmt(event.impact)}</div>`:''}</div>`;}
+  html+=`<div style="font-family:var(--mono);font-size:0.6rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);margin:1rem 0 0.4rem;">Commodity Prices</div>`;
+  html+=coms.map(c=>`<div class="sum-row"><span class="lbl">${c.name}</span><span class="val" style="color:var(--accent)">${fP(c.current_price)}</span></div>`).join('');
+  document.getElementById('mmContent').innerHTML=html;
+  document.getElementById('monthModal').classList.add('active');
+  renderAll();
+}
+
+function calcNewPrice(c,month){
+  const base=c.base_price;let price=c.current_price;
+  const cycle=gs.economy_cycle||'expansion';
+  const cm=cycle==='expansion'?1.003:cycle==='contraction'?0.997:1.0;
+  const inf=1+(gs.inflation_rate||0.02)/12;
+  if(c.behavior==='seasonal'){const s=[1.05,1.08,1.1,1.08,1.05,1.0,0.97,0.95,0.9,0.88,0.93,1.0];price=price+(base*s[month-1]-price)*0.3+(Math.random()-0.5)*base*0.04;}
+  else if(c.behavior==='seasonal_volatile'){const s=[1.1,1.12,1.08,1.0,0.95,0.9,0.88,0.92,0.98,1.05,1.08,1.1];price=price+(base*s[month-1]-price)*0.25+(Math.random()-0.5)*base*0.08;}
+  else if(c.behavior==='trend'){price+=(Math.random()-0.48)*base*0.06;if(price>base*1.5)price-=base*0.1;if(price<base*0.65)price+=base*0.1;}
+  else if(c.behavior==='chaotic'){price+=(Math.random()-0.5)*base*0.15;if(price<base*0.4)price=base*0.4;if(price>base*2.2)price=base*2.2;}
+  return Math.max(price*cm*inf,base*0.25);
+}
+
+function genEvent(cycle){
+  if(Math.random()>0.65)return null;
+  const pool=[
+    {w:20,t:'Local buyers increased grain demand.',i:0},
+    {w:18,t:'Fuel prices dipped across the region.',i:0},
+    {w:15,t:'Drought concerns tightened commodity supply.',i:0},
+    {w:12,t:'Bumper harvest softened commodity prices.',i:0},
+    {w:10,t:'Unexpected buyer offered a premium for stored grain.',i:Math.floor(Math.random()*1200+300)},
+    {w:8,t:'Silo required unplanned repair.',i:-Math.floor(Math.random()*900+200)},
+    {w:6,t:'Strong export demand pushed grain prices higher.',i:0},
+    {w:5,t:'Property investor paid consulting fee for market insight.',i:Math.floor(Math.random()*700+150)},
+    {w:4,t:'Infrastructure announced nearby — property values may rise.',i:0},
+    {w:2,t:`Economy ${cycle==='expansion'?'booming':'struggling'}. Markets reflect the shift.`,i:0},
+  ];
+  const total=pool.reduce((s,e)=>s+e.w,0);let r=Math.random()*total;
+  for(const ev of pool){r-=ev.w;if(r<=0)return{text:ev.t,impact:ev.i};}
+  return null;
+}
+
+// ── RETIRE ─────────────────────────────────────────────────────
+function openRetireModal(){
+  const nw=calcNetWorth();const months=(REAL_YEAR-2024)*12+REAL_MONTH;
+  document.getElementById('r1NW').textContent=fmt(nw);document.getElementById('r1Mo').textContent=months;
+  document.getElementById('retireModal1').classList.add('active');
+}
+function openRetireModal2(){closeModal('retireModal1');document.getElementById('retireInput').value='';document.getElementById('retireModal2').classList.add('active');}
+async function confirmRetire(){
+  if(document.getElementById('retireInput').value.trim().toUpperCase()!=='RETIRE')return showToast('Type RETIRE to confirm.','error');
+  const nw=calcNetWorth();const months=(REAL_YEAR-2024)*12+REAL_MONTH;
+  const history=getHistory();const peak=history.length?Math.max(...history.map(h=>h.value),nw):nw;
+  await sb.from('legacy_runs').insert({final_net_worth:nw,months_played:months,peak_net_worth:peak,retired_month:REAL_MONTH,retired_year:REAL_YEAR});
+  await Promise.all([
+    sb.from('vehicles').delete().neq('id',0),sb.from('properties').delete().neq('id',0),
+    sb.from('loans').delete().neq('id',0),sb.from('vehicle_market').delete().neq('id',0),
+    sb.from('property_market').delete().neq('id',0),sb.from('events_log').delete().neq('id',0),
+    sb.from('news_feed').delete().neq('id',0),sb.from('price_history').delete().neq('id',0),
+    sb.from('ledger').delete().neq('id',0),sb.from('activity_feed').delete().neq('id',0),
+sb.from('bank_accounts').delete().neq('id',0),
+  ]);
+  await Promise.all(coms.map(c=>sb.from('commodities').update({units_owned:0,current_price:c.base_price}).eq('id',c.id)));
+  await Promise.all(invs.map(i=>sb.from('investments').update({shares_owned:0,avg_buy_price:i.base_price,current_price:i.base_price}).eq('id',i.id)));
+  await sb.from('game_state').update({cash:10000,net_worth_history:'[]',economy_cycle:'expansion',economy_month:0,last_active:new Date().toISOString()}).eq('id',1);
+  // Create fresh accounts
+  await sb.from('bank_accounts').insert([
+    {name:'Personal Checking',type:'personal',balance:10000,interest_rate:0,is_default:true,opened_month:REAL_MONTH,opened_year:REAL_YEAR},
+    {name:'Business Checking',type:'business',balance:0,interest_rate:0,is_default:false,opened_month:REAL_MONTH,opened_year:REAL_YEAR},
+    {name:'High-Yield Savings',type:'savings',balance:150000,interest_rate:0.038,transfer_limit:5000,is_default:false,opened_month:REAL_MONTH,opened_year:REAL_YEAR},
+  ]);
+  closeModal('retireModal2');showToast('Retired! Starting fresh.','success');
+  setTimeout(()=>location.reload(),1500);
+}
+
+// ── HELPERS ────────────────────────────────────────────────────
+function calcNetWorth(){
+  return getTotalCash()
+    +coms.reduce((s,c)=>s+(c.units_owned*c.current_price),0)
+    +ownVeh.reduce((s,v)=>s+calcSaleP(v),0)
+    +ownProps.reduce((s,p)=>s+p.current_value,0)
+    +invs.reduce((s,i)=>s+(i.shares_owned*i.current_price),0)
+    -loans.reduce((s,l)=>s+l.remaining_balance,0);
+}
+
+function getHistory(){
+  let h=gs.net_worth_history||[];
+  if(typeof h==='string'){try{h=JSON.parse(h);}catch(e){h=[];}}
+  if(!Array.isArray(h))h=[];
+  return h;
+}
+
+function getMilestone(nw){let cur=MILESTONES[0],next=MILESTONES[1];for(let i=0;i<MILESTONES.length;i++){if(nw>=MILESTONES[i].nw){cur=MILESTONES[i];next=MILESTONES[i+1]||null;}}return{cur,next};}
+
+function closeModal(id){document.getElementById(id).classList.remove('active');}
+function fmt(n){if(n==null)return'$0';return(n<0?'-':'')+'$'+Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});}
+function fP(n){if(n==null)return'$0.00';return(n<0?'-':'')+'$'+Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function showToast(msg,type='success'){const t=document.getElementById('toast');t.textContent=msg;t.className=`toast ${type} show`;setTimeout(()=>t.classList.remove('show'),3500);}
+
+function switchPanel(name,el){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.querySelectorAll('.mobile-nav-item').forEach(n=>n.classList.remove('active'));
+  const panel=document.getElementById(`panel-${name}`);
+  if(panel)panel.classList.add('active');
+  if(el){el.classList.add('active');}
+  if(name==='portfolio')renderPortfolio();
+  if(name==='ledger')renderLedger();
+}
+
+function openMobileMenu(){document.getElementById('mobileMenu').style.display='block';document.body.style.overflow='hidden';}
+function closeMobileMenu(){document.getElementById('mobileMenu').style.display='none';document.body.style.overflow='';}
+function mobileNav(panel){closeMobileMenu();switchPanel(panel,null);document.querySelectorAll('.mobile-nav-item').forEach(n=>n.classList.remove('active'));}
+init();
+</script>
+</body>
+</html>
