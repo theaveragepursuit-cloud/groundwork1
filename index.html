@@ -1048,7 +1048,7 @@ function renderNews(){
   document.getElementById('advisorCard').innerHTML=`<div class="news-card advisor" style="margin-bottom:1px;"><div class="news-cat advisor">▸ ADVISOR INTELLIGENCE</div><div class="news-headline">${buildAdvisor()}</div></div>`;
   const current=news.filter(n=>n.month===gs.month&&n.year===gs.year);
   const old=news.filter(n=>!(n.month===gs.month&&n.year===gs.year));
-  const card=n=>`<div class="news-card ${n.category||''}"><div class="news-cat ${n.category||''}">${(n.category||'').toUpperCase()} ${n.month?`· ${MNA[(n.month-1)%12]} Y${n.year}`:''}` }</div><div class="news-headline">${n.headline}</div><div class="news-body">${n.body||''}</div>${n.signal?`<div class="news-signal ${n.signal}">● ${n.signal.toUpperCase()}</div>`:''}</div>`;
+  const card=n=>`<div class="news-card ${n.category||''}"><div class="news-cat ${n.category||''}">${(n.category||'').toUpperCase()}${n.month?` · ${MNA[(n.month-1)%12]} Y${n.year}`:''}</div><div class="news-headline">${n.headline}</div><div class="news-body">${n.body||''}</div>${n.signal?`<div class="news-signal ${n.signal}">● ${n.signal.toUpperCase()}</div>`:''}</div>`;
   document.getElementById('newsGrid').innerHTML=(current.length?current.map(card).join(''):old.slice(0,4).map(card).join(''));
 }
 
