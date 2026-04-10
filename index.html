@@ -794,7 +794,7 @@ async function loadAll(){
     sb.from('news_feed').select('*').order('created_at',{ascending:false}).limit(12),
     sb.from('philanthropy').select('*').order('created_at',{ascending:false}).limit(50),
   ]);
-  gs=r[0].data;invs=r[1].data||[];ownProps=r[2].data||[];propMkt=r[3].data||[];
+  gs=r[0].data;if(gs&&typeof gs.net_worth_history==='string'){try{gs.net_worth_history=JSON.parse(gs.net_worth_history);}catch(e){gs.net_worth_history=[];}}invs=r[1].data||[];ownProps=r[2].data||[];propMkt=r[3].data||[];
   ownVeh=r[4].data||[];vehMkt=r[5].data||[];loans=r[6].data||[];ledger=r[7].data||[];
   evts=r[8].data||[];legacyRuns=r[9].data||[];lifeState=r[10].data;career=r[11].data;
   education=r[12].data||[];goals=r[13].data||[];news=r[14].data||[];philanthropy=r[15].data||[];
@@ -998,7 +998,7 @@ function renderHeader(){
 
 function renderSidebar(){
   const nw=calcNetWorth();
-  const history=gs.net_worth_history||[];
+  const histRaw2=gs.net_worth_history||[];const history=Array.isArray(histRaw2)?histRaw2:(typeof histRaw2==='string'?JSON.parse(histRaw2):[]);
   const prev=history.length>=2?history[history.length-2].value:nw;
   const diff=nw-prev;
   document.getElementById('sbNW').textContent=fmt(nw);
@@ -1248,7 +1248,7 @@ function renderLegacy(){
 }
 
 function renderPortfolio(){
-  const history=gs.net_worth_history||[];drawNWChart(history);
+  const histRaw5=gs.net_worth_history||[];const history=Array.isArray(histRaw5)?histRaw5:(typeof histRaw5==='string'?JSON.parse(histRaw5):[]);drawNWChart(history);
   const nw=calcNetWorth();const all=history.map(h=>h.value);const peak=all.length?Math.max(...all,nw):nw;
   const months=gs.month+(gs.year-1)*12;
   const pv=ownProps.reduce((s,p)=>s+p.current_value,0);
@@ -1424,7 +1424,7 @@ function openRetireModal2(){closeModal('retireModal1');document.getElementById('
 async function confirmRetire(){
   if(document.getElementById('retireInput').value.trim().toUpperCase()!=='RETIRE')return showToast('Type RETIRE to confirm.','error');
   const nw=calcNetWorth();const months=gs.month+(gs.year-1)*12;
-  const history=gs.net_worth_history||[];const peak=history.length?Math.max(...history.map(h=>h.value),nw):nw;
+  const histRaw6=gs.net_worth_history||[];const history=Array.isArray(histRaw6)?histRaw6:(typeof histRaw6==='string'?JSON.parse(histRaw6):[]);const peak=history.length?Math.max(...history.map(h=>h.value),nw):nw;
   await sb.from('legacy_runs').insert({final_net_worth:nw,months_played:months,peak_net_worth:peak,retired_month:gs.month,retired_year:gs.year,notes:gs.scenario||'unknown'});
   await Promise.all([
     sb.from('vehicles').delete().neq('id',0),sb.from('properties').delete().neq('id',0),
@@ -1661,7 +1661,7 @@ async function processMonth(silent=false){
   // 17. Advance time
   let nm=m+1,ny=y;if(nm>12){nm=1;ny++;}
   const nwFinal=Math.max(-(loans.reduce((s,l)=>s+l.remaining_balance,0)+((lifeState?.student_loan_balance)||0)),calcNetWorth());
-  const history=gs.net_worth_history||[];history.push({month:m,year:y,value:nwFinal});
+  const histRaw=gs.net_worth_history||[];const history=Array.isArray(histRaw)?histRaw:(typeof histRaw==='string'?JSON.parse(histRaw):[]);history.push({month:m,year:y,value:nwFinal});
   gs.net_worth_history=history;gs.month=nm;gs.year=ny;gs.economy_cycle=eco;gs.economy_month=ecoM;gs.inflation_rate=infl;gs.interest_rate=rate;
 
   await generateNews();
